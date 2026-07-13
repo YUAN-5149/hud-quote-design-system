@@ -6,7 +6,8 @@ import { BillingScreen } from './screens/Billing.jsx';
 import { LoginScreen, WhitelistScreen } from './auth/Auth.jsx';
 import { loadSession, saveSession } from './lib/session.js';
 import { usePersistedState } from './lib/store.js';
-import { CASES_SEED, INVOICES_SEED } from './lib/data.js';
+import { CASES_SEED, INVOICES_SEED, QUOTES_SEED } from './lib/data.js';
+import { todayISO } from './lib/format.js';
 
 const LABELS = {
   dashboard: 'COMMAND · 主控台',
@@ -25,6 +26,8 @@ export default function App() {
   const [selectedCase, setSelectedCase] = useState(null);
   const [cases, setCases] = usePersistedState('hud_cases_v2', CASES_SEED);
   const [invoices, setInvoices] = usePersistedState('hud_invoices_v2', INVOICES_SEED);
+  const [quotes, setQuotes] = usePersistedState('hud_quotes_v1', QUOTES_SEED);
+  const [selectedQuote, setSelectedQuote] = useState(null);
   const [newCaseOpen, setNewCaseOpen] = useState(false);
 
   useEffect(() => { localStorage.setItem('scr', screen); }, [screen]);
@@ -34,16 +37,61 @@ export default function App() {
 
   if (!session) return <LoginScreen onAuth={handleAuth} />;
 
-  const openCase = (c) => { setSelectedCase(c); setScreen('quote'); };
-  const openNewQuote = () => { setSelectedCase(null); setScreen('quote'); };
+  const openCase = (c) => { setSelectedCase(c); setSelectedQuote(null); setScreen('quote'); };
+  const openNewQuote = () => { setSelectedCase(null); setSelectedQuote(null); setScreen('quote'); };
   const createCase = (c) => setCases(prev => [c, ...prev]);
+
+  // 從報價單列表開啟：帶入該報價單與其案件
+  const openQuoteDoc = (q) => {
+    setSelectedCase(cases.find(c => c.id === q.caseId) || null);
+    setSelectedQuote(q);
+    setScreen('quote');
+  };
+
+  // 報價編輯器儲存（草稿或送出）— 依 id upsert
+  const saveQuote = (record, goToList) => {
+    setQuotes(prev => prev.some(q => q.id === record.id)
+      ? prev.map(q => q.id === record.id ? { ...q, ...record } : q)
+      : [record, ...prev]);
+    if (goToList) setScreen('quotes');
+  };
+
+  // 業主簽回
+  const signQuote = (id) => {
+    setQuotes(prev => prev.map(q => q.id === id
+      ? { ...q, status: 'ok', statusLabel: '已簽回', signedAt: todayISO() }
+      : q));
+  };
+
+  // 同案件請款單流水號 — 從既有清單推算，避免與種子或手開請款撞號
+  const nextInvoiceId = (caseId) => {
+    const base = `B-${caseId.replace('#', '')}`;
+    let n = invoices.filter(v => v.caseId === caseId).length + 1;
+    while (invoices.some(v => v.id === `${base}-${n}`)) n++;
+    return `${base}-${n}`;
+  };
+
+  // 已簽回報價 → 開立請款單，並跳到請款頁
+  const convertQuote = (quote, { stage, amount, dueAt }) => {
+    const inv = {
+      id: nextInvoiceId(quote.caseId),
+      caseId: quote.caseId, case: quote.case, client: quote.client, gui: quote.gui || '',
+      stage, amount, issuedAt: todayISO(), dueAt: dueAt || null, paidAt: null,
+      status: 'warn', statusLabel: '待收款', quoteId: quote.id,
+    };
+    setInvoices(prev => [inv, ...prev]);
+    setQuotes(prev => prev.map(q => q.id === quote.id
+      ? { ...q, invoicedCount: (q.invoicedCount || 0) + 1, invoicedAmount: (q.invoicedAmount || 0) + amount }
+      : q));
+    setScreen('billing');
+  };
 
   const content = () => {
     switch (screen) {
       case 'dashboard': return <Dashboard cases={cases} invoices={invoices} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} onBuildQuote={openNewQuote} />;
       case 'cases': return <CaseList cases={cases} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} />;
-      case 'quote': return <QuoteBuilder key={selectedCase?.id || 'new'} caseData={selectedCase} onClose={() => setScreen('cases')} />;
-      case 'quotes': return <QuotesList onOpenQuote={openNewQuote} />;
+      case 'quote': return <QuoteBuilder key={selectedQuote?.id || selectedCase?.id || 'new'} caseData={selectedCase} quote={selectedQuote} onClose={() => setScreen('quotes')} onSave={saveQuote} />;
+      case 'quotes': return <QuotesList quotes={quotes} onNewQuote={openNewQuote} onOpenQuote={openQuoteDoc} onSign={signQuote} onConvert={convertQuote} />;
       case 'materials': return <MaterialsScreen />;
       case 'billing': return <BillingScreen cases={cases} invoices={invoices} setInvoices={setInvoices} />;
       case 'reports': return <ReportsScreen cases={cases} invoices={invoices} />;

@@ -52,6 +52,13 @@ export function validateGUI(gui) {
   return false;
 }
 
+// ISO 日期加 n 天
+export const addDays = (dateISO, days) => {
+  const d = new Date(dateISO);
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 // ISO 日期 (YYYY-MM-DD) → MM/DD 顯示
 export const fmtMD = (s) => (s && s.length >= 10 ? `${s.slice(5, 7)}/${s.slice(8, 10)}` : '—');
 

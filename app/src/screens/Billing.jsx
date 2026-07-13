@@ -79,6 +79,14 @@ export function BillingScreen({ cases, invoices, setInvoices }) {
     setInvoices(invoices.map(v => v.id === id ? { ...v, status: 'ok', statusLabel: '已收款', paidAt: todayISO() } : v));
   };
 
+  // 同案件流水號，避免撞號
+  const nextInvoiceId = (caseId) => {
+    const base = `B-${caseId.replace('#', '')}`;
+    let n = invoices.filter(v => v.caseId === caseId).length + 1;
+    while (invoices.some(v => v.id === `${base}-${n}`)) n++;
+    return `${base}-${n}`;
+  };
+
   return (
     <div className="screen" data-screen-label="Billing">
       <div className="screen-header">
@@ -144,7 +152,7 @@ export function BillingScreen({ cases, invoices, setInvoices }) {
         </div>
       </Panel>
 
-      <NewInvoiceModal open={open} onClose={() => setOpen(false)} onCreate={(v) => setInvoices([v, ...invoices])} cases={cases} />
+      <NewInvoiceModal open={open} onClose={() => setOpen(false)} onCreate={(v) => setInvoices([{ ...v, id: nextInvoiceId(v.caseId) }, ...invoices])} cases={cases} />
     </div>
   );
 }

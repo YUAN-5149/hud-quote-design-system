@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Panel, Metric, Chip, Button, Field, Input, Modal, Select, Icon } from '../components/Primitives.jsx';
-import { MATERIALS, QUOTES } from '../lib/data.js';
-import { fmt, todayISO } from '../lib/format.js';
+import { MATERIALS } from '../lib/data.js';
+import { fmt, fmtMD, todayISO, addDays } from '../lib/format.js';
 
 // ─────────────────────────────────────────────────────────────
 // NEW CASE MODAL
@@ -298,43 +298,143 @@ export function CaseList({ cases, onOpenCase, onNewCase }) {
 // ─────────────────────────────────────────────────────────────
 // QUOTES LIST
 // ─────────────────────────────────────────────────────────────
-export function QuotesList({ onOpenQuote }) {
+// 逾期未簽：送出後超過有效期仍未簽回
+const effQuoteStatus = (q) =>
+  q.status === 'warn' && q.validAt && q.validAt < todayISO() ? 'alert' : q.status;
+const effQuoteLabel = (q) => (effQuoteStatus(q) === 'alert' ? '逾期未簽' : q.statusLabel);
+
+// 已簽回報價 → 轉請款單
+function ConvertModal({ quote, onClose, onConvert }) {
+  const remaining = Math.max(0, quote.amount - (quote.invoicedAmount || 0));
+  const stageOptions = [
+    { value: '第一期 · 訂金 50%', amt: Math.min(Math.round(quote.amount * 0.5), remaining) },
+    { value: '第二期 · 完工款', amt: remaining },
+    { value: '全額 · 一次付清', amt: remaining },
+    { value: '追加工程款', amt: 0 },
+  ];
+  const [stage, setStage] = useState(quote.invoicedCount > 0 ? '第二期 · 完工款' : '第一期 · 訂金 50%');
+  const [amount, setAmount] = useState(() => {
+    const opt = stageOptions.find(o => o.value === (quote.invoicedCount > 0 ? '第二期 · 完工款' : '第一期 · 訂金 50%'));
+    return opt ? opt.amt : remaining;
+  });
+  const [due, setDue] = useState(addDays(todayISO(), 30));
+  const pickStage = (v) => {
+    setStage(v);
+    const opt = stageOptions.find(o => o.value === v);
+    if (opt && opt.amt > 0) setAmount(opt.amt);
+  };
+  const submit = () => {
+    if (!+amount) return;
+    onConvert(quote, { stage, amount: +amount, dueAt: due });
+    onClose();
+  };
+  return (
+    <Modal
+      open onClose={onClose}
+      title="轉開請款單 · QUOTE → INVOICE" meta={quote.id} width={560}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>取消</Button>
+          <Button variant="primary" icon="check" onClick={submit}>開立請款</Button>
+        </>
+      }
+    >
+      <div className="quote-meta-grid">
+        <Field label="案件 · CASE">
+          <Input value={`${quote.caseId} ${quote.case}`} disabled />
+        </Field>
+        <Field label="期別 · STAGE">
+          <Select value={stage} onChange={pickStage} options={stageOptions.map(o => ({ value: o.value, label: o.value }))} />
+        </Field>
+        <Field label="請款金額 · AMOUNT" helper={`報價 ${fmt(quote.amount)} · 已請款 ${fmt(quote.invoicedAmount || 0)} · 未請款 ${fmt(remaining)}`}>
+          <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} />
+        </Field>
+        <Field label="付款期限 · DUE">
+          <Input type="date" value={due} onChange={e => setDue(e.target.value)} />
+        </Field>
+      </div>
+    </Modal>
+  );
+}
+
+export function QuotesList({ quotes = [], onNewQuote, onOpenQuote, onSign, onConvert }) {
+  const [converting, setConverting] = useState(null);
+  const monthKey = todayISO().slice(0, 7);
+  const sorted = [...quotes].sort((a, b) => (b.issuedAt || '').localeCompare(a.issuedAt || ''));
+  const issuedThisMonth = quotes.filter(q => q.issuedAt && q.issuedAt.slice(0, 7) === monthKey);
+  const pending = quotes.filter(q => effQuoteStatus(q) === 'warn');
+  const overdue = quotes.filter(q => effQuoteStatus(q) === 'alert');
+  const signed = quotes.filter(q => q.status === 'ok');
+  const sum = (list) => list.reduce((s, q) => s + q.amount, 0);
+
   return (
     <div className="screen" data-screen-label="Quotes">
       <div className="screen-header">
         <h1 className="screen-title">報價單 // QUOTES</h1>
         <div className="screen-actions">
-          <Button variant="primary" icon="file-plus" onClick={onOpenQuote}>建立報價</Button>
+          <Button variant="primary" icon="file-plus" onClick={onNewQuote}>建立報價</Button>
         </div>
       </div>
       <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-        <Panel title="本月開立" meta="APR"><Metric label="ISSUED" value={QUOTES.length} accent sub="張" /></Panel>
-        <Panel title="待業主簽回" meta="PENDING"><Metric label="AWAITING" value="1" delta="03:42 已等待" deltaKind="warn" /></Panel>
-        <Panel title="已簽回金額" meta="APPROVED"><Metric label="SIGNED" value={fmt(405300)} /></Panel>
-        <Panel title="逾期未簽" meta="OVERDUE"><Metric label="OVERDUE" value="1" delta="需聯絡業主" deltaKind="alert" /></Panel>
+        <Panel title="本月開立" meta="ISSUED"><Metric label="ISSUED" value={issuedThisMonth.length} accent sub="張" /></Panel>
+        <Panel title="待業主簽回" meta="PENDING"><Metric label="AWAITING" value={pending.length} sub={fmt(sum(pending))} delta={pending.length ? '等待簽回' : '無待簽'} deltaKind="warn" /></Panel>
+        <Panel title="已簽回金額" meta="APPROVED"><Metric label="SIGNED" value={fmt(sum(signed))} sub={`${signed.length} 張`} /></Panel>
+        <Panel title="逾期未簽" meta="OVERDUE"><Metric label="OVERDUE" value={overdue.length} delta={overdue.length ? '需聯絡業主' : '無逾期'} deltaKind={overdue.length ? 'alert' : 'ok'} /></Panel>
       </div>
-      <Panel title="報價單紀錄" meta={`${QUOTES.length} DOCS`}>
+      <Panel title="報價單紀錄" meta={`${quotes.length} DOCS`}>
         <div className="table-scroll">
           <table className="data-table">
             <thead>
-              <tr><th>QUOTE</th><th>案件</th><th>版本</th><th>狀態</th><th>開立</th><th>有效</th><th style={{ textAlign: 'right' }}>金額</th></tr>
+              <tr><th>QUOTE</th><th>案件</th><th>版本</th><th>狀態</th><th>開立</th><th>有效</th><th>簽回</th><th style={{ textAlign: 'right' }}>金額</th><th style={{ textAlign: 'right' }}>操作</th></tr>
             </thead>
             <tbody>
-              {QUOTES.map(q => (
-                <tr key={q.id} onClick={onOpenQuote}>
-                  <td className="mono">{q.id}</td>
-                  <td><div>{q.case}</div><div className="row-sub mono">{q.caseId}</div></td>
-                  <td><Chip kind="dim" code>{q.version}</Chip></td>
-                  <td><Chip kind={q.status}>{q.statusLabel}</Chip></td>
-                  <td className="row-sub mono">{q.issued}</td>
-                  <td className="row-sub mono">{q.valid}</td>
-                  <td className="mono" style={{ textAlign: 'right' }}>{fmt(q.amount)}</td>
-                </tr>
-              ))}
+              {sorted.map(q => {
+                const st = effQuoteStatus(q);
+                const remaining = q.amount - (q.invoicedAmount || 0);
+                return (
+                  <tr key={q.id} onClick={() => onOpenQuote(q)}>
+                    <td className="mono">{q.id}</td>
+                    <td><div>{q.case}</div><div className="row-sub mono">{q.caseId}</div></td>
+                    <td><Chip kind="dim" code>{q.version}</Chip></td>
+                    <td><Chip kind={st}>{effQuoteLabel(q)}</Chip></td>
+                    <td className="row-sub mono">{fmtMD(q.issuedAt)}</td>
+                    <td className="row-sub mono" style={{ color: st === 'alert' ? 'var(--alert)' : undefined }}>{fmtMD(q.validAt)}</td>
+                    <td className="row-sub mono" style={{ color: q.signedAt ? 'var(--ok)' : undefined }}>{fmtMD(q.signedAt)}</td>
+                    <td className="mono" style={{ textAlign: 'right' }}>{fmt(q.amount)}</td>
+                    <td style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                      {q.status === 'info' && (
+                        <button className="btn btn-solid btn-sm" onClick={() => onOpenQuote(q)}>
+                          <Icon name="pencil" size={12} /><span>繼續編輯</span>
+                        </button>
+                      )}
+                      {(st === 'warn' || st === 'alert') && (
+                        <button className="btn btn-solid btn-sm" onClick={() => onSign(q.id)}>
+                          <Icon name="check" size={12} /><span>業主簽回</span>
+                        </button>
+                      )}
+                      {q.status === 'ok' && remaining > 0 && (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                          {q.invoicedCount > 0 && <span className="mono-label" style={{ color: 'var(--fg-3)' }}>已開 {q.invoicedCount} 期</span>}
+                          <button className="btn btn-primary btn-sm" onClick={() => setConverting(q)}>
+                            <Icon name="receipt" size={12} /><span>轉請款</span>
+                          </button>
+                        </div>
+                      )}
+                      {q.status === 'ok' && remaining <= 0 && (
+                        <span className="mono-label" style={{ color: 'var(--ok)' }}>已全額請款</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {quotes.length === 0 && (
+                <tr><td colSpan={9} style={{ textAlign: 'center', color: 'var(--fg-3)', padding: 32 }}>尚無報價單</td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </Panel>
+      {converting && <ConvertModal quote={converting} onClose={() => setConverting(null)} onConvert={onConvert} />}
     </div>
   );
 }

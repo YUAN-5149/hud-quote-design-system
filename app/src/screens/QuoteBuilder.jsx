@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Panel, Chip, Button, Field, Input, Toggle, Icon } from '../components/Primitives.jsx';
 import { AddLineItemModal } from './Screens.jsx';
 import { LINE_ITEMS_INIT, COMPANY } from '../lib/data.js';
-import { fmt, toChineseUpper, validateGUI, todayYMD } from '../lib/format.js';
+import { fmt, toChineseUpper, validateGUI, todayYMD, todayISO, addDays } from '../lib/format.js';
 
 // ─────────────────────────────────────────────────────────────
 // 列印版報價單 — 白底正式文件（@media print 才顯示，見 print.css）
@@ -92,15 +92,16 @@ function PrintQuote({ info, items, subtotal, tax, total, taxInc }) {
 // ─────────────────────────────────────────────────────────────
 // QUOTE BUILDER
 // ─────────────────────────────────────────────────────────────
-export function QuoteBuilder({ caseData, onClose }) {
-  const [items, setItems] = useState(LINE_ITEMS_INIT);
-  const [taxInc, setTaxInc] = useState(true);
+export function QuoteBuilder({ caseData, quote, onClose, onSave }) {
+  const [items, setItems] = useState(quote?.items?.length ? quote.items : LINE_ITEMS_INIT);
+  const [taxInc, setTaxInc] = useState(quote?.taxInc ?? true);
   const [addOpen, setAddOpen] = useState(false);
-  const [info, setInfo] = useState({
-    quoteNo: `Q-${(caseData?.id || '#NEW').replace('#', '')}-A`,
-    name: caseData?.name || '新報價單',
-    client: caseData?.client || '大明建設 · 王協理',
-    gui: caseData?.gui || '',
+  const [savedTick, setSavedTick] = useState(false);
+  const [info, setInfo] = useState(quote?.info || {
+    quoteNo: quote?.id || `Q-${(caseData?.id || `#${todayISO().slice(0,4)}-NEW`).replace('#', '')}-A`,
+    name: quote?.case || caseData?.name || '新報價單',
+    client: quote?.client || caseData?.client || '大明建設 · 王協理',
+    gui: quote?.gui || caseData?.gui || '',
     phone: '02-2723-xxxx',
     location: '台北市信義區松高路 19 號 3F',
     duration: '14 天',
@@ -114,6 +115,27 @@ export function QuoteBuilder({ caseData, onClose }) {
   const addItem = (it) => setItems(prev => [...prev, it]);
   const setF = (k) => (e) => setInfo({ ...info, [k]: e.target.value });
 
+  // 組出報價單紀錄（保留簽回／請款進度），交給 App upsert
+  const buildRecord = (status, statusLabel) => ({
+    id: info.quoteNo,
+    caseId: quote?.caseId || caseData?.id || `#${todayISO().slice(0,4)}-NEW`,
+    case: info.name, client: (info.client || '').split(' · ')[0], gui: info.gui,
+    version: quote?.version || 'v1',
+    status, statusLabel,
+    amount: total, taxInc, items, info,
+    issuedAt: status === 'warn' ? todayISO() : (quote?.issuedAt || todayISO()),
+    validAt: status === 'warn' ? addDays(todayISO(), 30) : (quote?.validAt || addDays(todayISO(), 30)),
+    signedAt: quote?.signedAt || null,
+    invoicedCount: quote?.invoicedCount || 0,
+    invoicedAmount: quote?.invoicedAmount || 0,
+  });
+  const saveDraft = () => {
+    onSave(buildRecord('info', '草稿'), false);
+    setSavedTick(true);
+    setTimeout(() => setSavedTick(false), 1600);
+  };
+  const sendQuote = () => onSave(buildRecord('warn', '待業主簽回'), true);
+
   return (
     <div className="screen screen-quote" data-screen-label="Quote Builder">
       <div className="screen-header">
@@ -124,8 +146,8 @@ export function QuoteBuilder({ caseData, onClose }) {
         <div className="screen-actions">
           <Button variant="ghost" onClick={onClose} icon="x">關閉</Button>
           <Button variant="solid" icon="printer" onClick={() => window.print()}>列印 / PDF</Button>
-          <Button variant="solid" icon="save">儲存草稿</Button>
-          <Button variant="primary" icon="send">送出報價</Button>
+          <Button variant="solid" icon={savedTick ? 'check' : 'save'} onClick={saveDraft}>{savedTick ? '已儲存' : '儲存草稿'}</Button>
+          <Button variant="primary" icon="send" onClick={sendQuote}>送出報價</Button>
         </div>
       </div>
 

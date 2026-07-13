@@ -53,12 +53,38 @@ export const LINE_ITEMS_INIT = [
   { id: 5, type: 'labor', name: '接地測試 · 現場驗收', qty: 1, unit: '式', price: 4500, cat: '工資' },
 ];
 
-export const QUOTES = [
-  { id: 'Q-2025-0418-A', caseId: '#2025-0418', case: '大明商辦 3F 配電工程', version: 'v3', status: 'warn', statusLabel: '待業主簽回', amount: 128400, issued: '04/18', valid: '05/18' },
-  { id: 'Q-2025-0416-A', caseId: '#2025-0416', case: '信義區吳公館整修', version: 'v1', status: 'info', statusLabel: '草稿', amount: 48200, issued: '04/16', valid: '05/16' },
-  { id: 'Q-2025-0411-B', caseId: '#2025-0411', case: '文心飯店地下機房配管', version: 'v2', status: 'ok', statusLabel: '已簽回', amount: 312800, issued: '04/11', valid: '05/11' },
-  { id: 'Q-2025-0409-A', caseId: '#2025-0409', case: '松山火鍋店冷凍配電', version: 'v1', status: 'ok', statusLabel: '已簽回', amount: 92500, issued: '04/09', valid: '05/09' },
-  { id: 'Q-2025-0406-A', caseId: '#2025-0406', case: '林口集合住宅熱水管線', version: 'v2', status: 'alert', statusLabel: '逾期未簽', amount: 186700, issued: '04/06', valid: '04/16' },
+// 報價單種子 — 狀態流：草稿 (info) → 待業主簽回 (warn) → 已簽回 (ok)
+// 逾期未簽由 UI 依 validAt < 今天 自動判斷
+const addDaysISO = (dateISO, days) => {
+  const d = new Date(dateISO);
+  d.setDate(d.getDate() + days);
+  return isoOf(d);
+};
+const QUOTE_LABELS = { info: '草稿', warn: '待業主簽回', ok: '已簽回' };
+const mkQuote = (caseRef, version, status, issued, opts = {}) => {
+  const c = CASES_SEED.find(x => x.name === caseRef);
+  const issuedAt = monthsAgo(issued[0], issued[1]);
+  return {
+    id: `Q-${c.id.replace('#', '')}-${String.fromCharCode(64 + +version.slice(1))}`,
+    caseId: c.id, case: c.name, client: c.client.split(' · ')[0], gui: c.gui,
+    version, status, statusLabel: QUOTE_LABELS[status],
+    amount: opts.amount ?? c.amount,
+    issuedAt, validAt: addDaysISO(issuedAt, 30),
+    signedAt: opts.signed ? monthsAgo(opts.signed[0], opts.signed[1]) : null,
+    invoicedCount: opts.invoicedCount || 0,
+    invoicedAmount: opts.invoicedAmount || 0,
+    items: null, info: null, taxInc: true,
+  };
+};
+
+export const QUOTES_SEED = [
+  mkQuote('大明商辦 3F 配電工程',   'v3', 'warn', [0, 8]),
+  mkQuote('大明商辦 3F 配電工程',   'v2', 'warn', [1, 2],  { amount: 121800 }), // 超過 30 天 → UI 顯示逾期未簽
+  mkQuote('信義區吳公館整修',       'v1', 'info', [0, 6]),
+  mkQuote('文心飯店地下機房配管',   'v2', 'ok',   [3, 10], { signed: [3, 20], invoicedCount: 2, invoicedAmount: 312800 }),
+  mkQuote('松山火鍋店冷凍配電',     'v1', 'ok',   [1, 8],  { signed: [1, 9],  invoicedCount: 1, invoicedAmount: 92500 }),
+  mkQuote('林口集合住宅熱水管線',   'v2', 'ok',   [2, 6],  { signed: [2, 7],  invoicedCount: 1, invoicedAmount: 93400 }),
+  mkQuote('板橋誠品門市照明更新',   'v1', 'ok',   [2, 2],  { signed: [2, 3],  invoicedCount: 1, invoicedAmount: 64200 }),
 ];
 
 // 請款單種子（BILLING）— 以案件為本，鋪滿近 12 個月
