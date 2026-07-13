@@ -52,6 +52,14 @@ export function validateGUI(gui) {
   return false;
 }
 
+// ISO 日期 (YYYY-MM-DD) → MM/DD 顯示
+export const fmtMD = (s) => (s && s.length >= 10 ? `${s.slice(5, 7)}/${s.slice(8, 10)}` : '—');
+
+export const todayISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export const todayYMD = () => {
   const d = new Date();
   return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;

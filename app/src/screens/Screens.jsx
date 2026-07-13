@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Panel, Metric, Chip, Button, Field, Input, Modal, Select, Icon } from '../components/Primitives.jsx';
-import { MATERIALS, QUOTES, MONTHLY, CLIENT_DIST } from '../lib/data.js';
-import { fmt } from '../lib/format.js';
+import { MATERIALS, QUOTES } from '../lib/data.js';
+import { fmt, todayISO } from '../lib/format.js';
 
 // ─────────────────────────────────────────────────────────────
 // NEW CASE MODAL
@@ -19,6 +19,7 @@ export function NewCaseModal({ open, onClose, onCreate }) {
     const id = `#${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
     onCreate({
       id,
+      createdAt: todayISO(),
       name: name.trim(),
       client: client.trim() || '—',
       gui: gui.trim(),
@@ -169,9 +170,13 @@ export function AddLineItemModal({ open, onClose, onAdd }) {
 // ─────────────────────────────────────────────────────────────
 // DASHBOARD
 // ─────────────────────────────────────────────────────────────
-export function Dashboard({ cases, onOpenCase, onNewCase, onBuildQuote }) {
+export function Dashboard({ cases, invoices = [], onOpenCase, onNewCase, onBuildQuote }) {
   const activeCases = cases.filter(c => c.status === 'active');
-  const totalMonth = cases.reduce((s, c) => s + c.amount, 0);
+  const monthKey = todayISO().slice(0, 7);
+  const paidThisMonth = invoices.filter(v => v.paidAt && v.paidAt.slice(0, 7) === monthKey);
+  const unpaid = invoices.filter(v => v.status !== 'ok');
+  const overdueCount = invoices.filter(v => v.status === 'alert').length;
+  const sum = (list) => list.reduce((s, v) => s + v.amount, 0);
   return (
     <div className="screen" data-screen-label="Dashboard">
       <div className="screen-header">
@@ -182,14 +187,14 @@ export function Dashboard({ cases, onOpenCase, onNewCase, onBuildQuote }) {
         </div>
       </div>
       <div className="metric-grid">
-        <Panel title="本月收款" meta="2026 · APR" accent>
-          <Metric label="TOTAL RECEIVED" value={fmt(totalMonth)} delta="▲ +12.4% · 月增 NT$ 92,800" />
+        <Panel title="本月收款" meta="LIVE" accent>
+          <Metric label="RECEIVED" value={fmt(sum(paidThisMonth))} sub={`${paidThisMonth.length} 張`} />
         </Panel>
         <Panel title="進行中案件" meta="LIVE">
           <Metric label="ACTIVE CASES" value={activeCases.length} accent delta={`▲ ${cases.filter(c=>c.status==='warn').length} 待確認 · ${cases.filter(c=>c.status==='alert').length} 逾期`} deltaKind="warn" />
         </Panel>
-        <Panel title="待開發票" meta="PENDING">
-          <Metric label="TO BE ISSUED" value={fmt(218300)} sub="4 張" delta="7 日內到期" deltaKind="warn" />
+        <Panel title="待收款項" meta="RECEIVABLE">
+          <Metric label="UNPAID" value={fmt(sum(unpaid))} sub={`${unpaid.length} 張`} delta={overdueCount ? `${overdueCount} 張逾期` : '無逾期'} deltaKind={overdueCount ? 'alert' : 'ok'} />
         </Panel>
         <Panel title="本月工時" meta="LOG">
           <Metric label="LABOR HOURS" value="214.5" sub="HR · 3 師傅" delta="▲ 效率 94%" />
@@ -412,13 +417,70 @@ export function MaterialsScreen() {
 // ─────────────────────────────────────────────────────────────
 const RANGE_MONTHS = { '3m': 3, '6m': 6, '1y': 12 };
 
-export function ReportsScreen() {
+// 近 n 個月的月份桶（endOffset 往前平移，用於「前期」比較），key = 'YYYY-MM'
+function lastMonths(n, endOffset = 0) {
+  const now = new Date();
+  const arr = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i - endOffset, 1);
+    arr.push({
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: `${String(d.getMonth() + 1).padStart(2, '0')}月`,
+    });
+  }
+  return arr;
+}
+
+const inMonth = (iso, key) => !!iso && iso.slice(0, 7) === key;
+const sumAmt = (list) => list.reduce((s, v) => s + v.amount, 0);
+
+export function ReportsScreen({ cases = [], invoices = [] }) {
   const [range, setRange] = useState('6m');
-  const months = MONTHLY.slice(-RANGE_MONTHS[range]);
-  const maxVal = Math.max(...months.map(m => m.rev));
-  const totalRev = months.reduce((s,m) => s + m.rev, 0);
-  const totalCost = months.reduce((s,m) => s + m.cost, 0);
-  const margin = ((totalRev - totalCost) / totalRev * 100).toFixed(1);
+  const n = RANGE_MONTHS[range];
+
+  // 每月統計：已收款（依收款日）、開立請款（依開立日）
+  const months = lastMonths(n).map(m => ({
+    ...m,
+    paid: sumAmt(invoices.filter(v => inMonth(v.paidAt, m.key))),
+    issued: sumAmt(invoices.filter(v => inMonth(v.issuedAt, m.key))),
+  }));
+  const paidTotal = months.reduce((s, m) => s + m.paid, 0);
+  const issuedInRange = invoices.filter(v => months.some(m => inMonth(v.issuedAt, m.key)));
+  const issuedTotal = sumAmt(issuedInRange);
+  const unpaidCount = issuedInRange.filter(v => v.status !== 'ok').length;
+  const collectRate = issuedTotal ? Math.round(paidTotal / issuedTotal * 100) : 0;
+
+  // 與前一段等長期間比較（沒有更早資料時不顯示）
+  const prevPaid = lastMonths(n, n).reduce((s, m) =>
+    s + sumAmt(invoices.filter(v => inMonth(v.paidAt, m.key))), 0);
+  const paidDelta = prevPaid > 0 ? (paidTotal - prevPaid) / prevPaid * 100 : null;
+
+  const doneCases = cases.filter(c => c.progress === 100 || c.status === 'ok').length;
+  const completion = cases.length ? Math.round(doneCases / cases.length * 100) : 0;
+
+  // 業主分佈：期間內開立請款金額，前 4 名 + 其他
+  const byClient = {};
+  issuedInRange.forEach(v => { byClient[v.client] = (byClient[v.client] || 0) + v.amount; });
+  const clientsSorted = Object.entries(byClient).sort((a, b) => b[1] - a[1]);
+  const restSum = clientsSorted.slice(4).reduce((s, [, v]) => s + v, 0);
+  const clientDist = [
+    ...clientsSorted.slice(0, 4).map(([name, value]) => ({ name, value })),
+    ...(restSum > 0 ? [{ name: `其他 ${clientsSorted.length - 4} 家`, value: restSum }] : []),
+  ];
+
+  // 案件狀態分析（全部案件，依合約金額）
+  const statusGroups = [
+    { name: '進行中', key: 'active' },
+    { name: '待確認', key: 'warn' },
+    { name: '逾期', key: 'alert' },
+    { name: '已完工', key: 'ok' },
+  ].map(g => {
+    const list = cases.filter(c => c.status === g.key);
+    return { ...g, count: list.length, amt: list.reduce((s, c) => s + c.amount, 0) };
+  });
+  const caseAmtTotal = statusGroups.reduce((s, g) => s + g.amt, 0) || 1;
+
+  const maxVal = Math.max(...months.map(m => Math.max(m.paid, m.issued)), 1);
 
   return (
     <div className="screen" data-screen-label="Reports">
@@ -435,72 +497,87 @@ export function ReportsScreen() {
       </div>
 
       <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-        <Panel title="期間營收" meta="REVENUE" accent><Metric label="TOTAL" value={fmt(totalRev * 1000)} delta="▲ +18.2% 年增" /></Panel>
-        <Panel title="期間成本" meta="COST"><Metric label="TOTAL" value={fmt(totalCost * 1000)} delta="▲ +12.4% 年增" deltaKind="warn" /></Panel>
-        <Panel title="毛利率" meta="MARGIN"><Metric label="MARGIN" value={margin + '%'} accent delta="▲ +2.1 pt" /></Panel>
-        <Panel title="案件完成率" meta="RATE"><Metric label="COMPLETION" value="88%" delta="▲ 高於去年 6 pt" /></Panel>
+        <Panel title="期間已收款" meta="RECEIVED" accent>
+          <Metric label="TOTAL" value={fmt(paidTotal)}
+            delta={paidDelta !== null ? `${paidDelta >= 0 ? '▲ +' : '▼ '}${paidDelta.toFixed(1)}% · 較前期` : undefined}
+            deltaKind={paidDelta !== null && paidDelta < 0 ? 'warn' : 'ok'} />
+        </Panel>
+        <Panel title="期間開立請款" meta="ISSUED">
+          <Metric label="TOTAL" value={fmt(issuedTotal)} sub={`${issuedInRange.length} 張`} />
+        </Panel>
+        <Panel title="回收率" meta="COLLECTED">
+          <Metric label="RATE" value={collectRate + '%'} accent
+            delta={unpaidCount ? `${unpaidCount} 張未收` : '全數收訖'}
+            deltaKind={unpaidCount ? 'warn' : 'ok'} />
+        </Panel>
+        <Panel title="案件完成率" meta="RATE">
+          <Metric label="COMPLETION" value={completion + '%'} sub={`${doneCases}/${cases.length} 案`} />
+        </Panel>
       </div>
 
       <div className="two-col">
-        <Panel title="月營收對比" meta={`REVENUE · COST · 千元 · ${months.length} 個月`}>
+        <Panel title="月收款對比" meta={`已收款 · 開立請款 · 千元 · ${months.length} 個月`}>
           <div className="chart-wrap">
             <div className="chart-bars" style={{ gridTemplateColumns: `repeat(${months.length}, 1fr)` }}>
               {months.map(m => {
-                const hR = (m.rev / maxVal) * 100;
-                const hC = (m.cost / maxVal) * 100;
+                const hP = (m.paid / maxVal) * 100;
+                const hI = (m.issued / maxVal) * 100;
                 return (
-                  <div key={m.m} className="bar-group" title={`${m.m} · 營收 ${m.rev} / 成本 ${m.cost}`}>
+                  <div key={m.key} className="bar-group" title={`${m.label} · 已收 ${Math.round(m.paid/1000)}K / 開立 ${Math.round(m.issued/1000)}K`}>
                     <div className="bar-pair">
-                      <span className="bar bar-rev" style={{ height: hR + '%' }}>
-                        <span className="bar-v mono">{m.rev}</span>
+                      <span className="bar bar-rev" style={{ height: hP + '%' }}>
+                        {m.paid > 0 && <span className="bar-v mono">{Math.round(m.paid / 1000)}</span>}
                       </span>
-                      <span className="bar bar-cost" style={{ height: hC + '%' }} />
+                      <span className="bar bar-cost" style={{ height: hI + '%' }} />
                     </div>
-                    <span className="bar-label mono">{m.m}</span>
+                    <span className="bar-label mono">{m.label}</span>
                   </div>
                 );
               })}
             </div>
             <div className="chart-legend">
-              <span className="legend-item"><span className="dot-sq" style={{ background: 'var(--accent)' }} />營收</span>
-              <span className="legend-item"><span className="dot-sq" style={{ background: 'var(--fg-4)' }} />成本</span>
+              <span className="legend-item"><span className="dot-sq" style={{ background: 'var(--accent)' }} />已收款</span>
+              <span className="legend-item"><span className="dot-sq" style={{ background: 'var(--fg-4)' }} />開立請款</span>
             </div>
           </div>
         </Panel>
 
-        <Panel title="業主分佈" meta="TOP CLIENTS">
+        <Panel title="業主分佈" meta="期間請款 · TOP CLIENTS">
           <ul className="dist-list">
-            {CLIENT_DIST.map((c, i) => (
-              <li key={c.name}>
-                <div className="dist-hd">
-                  <span className="mono-label" style={{ color: 'var(--fg-4)' }}>{String(i+1).padStart(2,'0')}</span>
-                  <span style={{ flex: 1, fontFamily: 'var(--font-tc)', color: 'var(--fg-1)' }}>{c.name}</span>
-                  <span className="mono" style={{ color: 'var(--accent)' }}>{fmt(c.value * 1000)}</span>
-                </div>
-                <div className="dist-bar"><span className="dist-fill" style={{ width: c.pct + '%' }} /></div>
-                <span className="mono row-sub">{c.pct}%</span>
-              </li>
-            ))}
+            {clientDist.map((c, i) => {
+              const pct = issuedTotal ? Math.round(c.value / issuedTotal * 100) : 0;
+              return (
+                <li key={c.name}>
+                  <div className="dist-hd">
+                    <span className="mono-label" style={{ color: 'var(--fg-4)' }}>{String(i+1).padStart(2,'0')}</span>
+                    <span style={{ flex: 1, fontFamily: 'var(--font-tc)', color: 'var(--fg-1)' }}>{c.name}</span>
+                    <span className="mono" style={{ color: 'var(--accent)' }}>{fmt(c.value)}</span>
+                  </div>
+                  <div className="dist-bar"><span className="dist-fill" style={{ width: pct + '%' }} /></div>
+                  <span className="mono row-sub">{pct}%</span>
+                </li>
+              );
+            })}
+            {clientDist.length === 0 && (
+              <li style={{ color: 'var(--fg-3)', padding: 16, textAlign: 'center' }}>期間內無請款紀錄</li>
+            )}
           </ul>
         </Panel>
       </div>
 
-      <Panel title="工項類別分析" meta="BY CATEGORY">
-        <div className="cat-grid">
-          {[
-            { name: '配電 · 強電', pct: 42, amt: 1860 },
-            { name: '配管 · 給排水', pct: 28, amt: 1240 },
-            { name: '照明安裝', pct: 14, amt: 620 },
-            { name: '空調配線', pct: 10, amt: 440 },
-            { name: '其他雜項', pct: 6, amt: 264 },
-          ].map(c => (
-            <div key={c.name} className="cat-card">
-              <div className="mono-label" style={{ color: 'var(--accent)' }}>{c.name}</div>
-              <div className="num-hd">{c.pct}%</div>
-              <div className="mono row-sub">{fmt(c.amt * 1000)}</div>
-              <div className="dist-bar" style={{ marginTop: 8 }}><span className="dist-fill" style={{ width: c.pct * 2 + '%' }} /></div>
-            </div>
-          ))}
+      <Panel title="案件狀態分析" meta="BY STATUS · 合約金額">
+        <div className="cat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          {statusGroups.map(g => {
+            const pct = Math.round(g.amt / caseAmtTotal * 100);
+            return (
+              <div key={g.key} className="cat-card">
+                <div className="mono-label" style={{ color: 'var(--accent)' }}>{g.name} · {g.count} 案</div>
+                <div className="num-hd">{pct}%</div>
+                <div className="mono row-sub">{fmt(g.amt)}</div>
+                <div className="dist-bar" style={{ marginTop: 8 }}><span className="dist-fill" style={{ width: pct + '%' }} /></div>
+              </div>
+            );
+          })}
         </div>
       </Panel>
     </div>

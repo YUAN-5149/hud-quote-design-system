@@ -1,11 +1,33 @@
-// 種子資料 — 案件、材料庫、報價單、請款單、報表
+// 種子資料 — 案件、材料庫、報價單、請款單
+// 日期以「今天」為基準往回鋪 12 個月，Demo 的報表統計永遠有資料
+
+const isoOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+// n 個月前的某一天（day 超過當月天數時 JS Date 會自動進位，種子資料用小日期避免）
+const monthsAgo = (n, day = 15) => {
+  const now = new Date();
+  return isoOf(new Date(now.getFullYear(), now.getMonth() - n, day));
+};
+const caseIdOf = (dateISO) => `#${dateISO.slice(0, 4)}-${dateISO.slice(5, 7)}${dateISO.slice(8, 10)}`;
+const mmdd = (dateISO) => `${dateISO.slice(5, 7)}/${dateISO.slice(8, 10)}`;
+
+const mkCase = (offsetM, day, name, client, gui, status, statusLabel, amount, location, progress) => {
+  const createdAt = monthsAgo(offsetM, day);
+  return { id: caseIdOf(createdAt), createdAt, name, client, gui, status, statusLabel, amount, updated: mmdd(createdAt), location, progress };
+};
+
 export const CASES_SEED = [
-  { id: '#2025-0418', name: '大明商辦 3F 配電工程', client: '大明建設 · 王協理', gui: '84149961', status: 'active', statusLabel: '進行中', amount: 128400, updated: '14:32', location: '台北 · 信義', progress: 62 },
-  { id: '#2025-0416', name: '信義區吳公館整修', client: '吳先生', gui: '', status: 'warn', statusLabel: '待確認', amount: 48200, updated: '11:08', location: '台北 · 信義', progress: 24 },
-  { id: '#2025-0411', name: '文心飯店地下機房配管', client: '文心國際酒店', gui: '20828393', status: 'alert', statusLabel: '逾期', amount: 312800, updated: '04/12', location: '台中 · 西屯', progress: 88 },
-  { id: '#2025-0409', name: '松山火鍋店冷凍配電', client: '頂鍋食品', gui: '53212539', status: 'ok', statusLabel: '已付款', amount: 92500, updated: '04/10', location: '台北 · 松山', progress: 100 },
-  { id: '#2025-0406', name: '林口集合住宅熱水管線', client: '日盛營造', gui: '86517312', status: 'active', statusLabel: '進行中', amount: 186700, updated: '04/15', location: '新北 · 林口', progress: 41 },
-  { id: '#2025-0402', name: '板橋誠品門市照明更新', client: '誠品生活', gui: '23222367', status: 'ok', statusLabel: '已付款', amount: 64200, updated: '04/03', location: '新北 · 板橋', progress: 100 },
+  mkCase(0, 8,  '大明商辦 3F 配電工程',   '大明建設 · 王協理', '84149961', 'active', '進行中', 128400, '台北 · 信義', 62),
+  mkCase(0, 6,  '信義區吳公館整修',       '吳先生',           '',         'warn',   '待確認', 48200,  '台北 · 信義', 24),
+  mkCase(1, 11, '文心飯店地下機房配管',   '文心國際酒店',     '20828393', 'alert',  '逾期',   312800, '台中 · 西屯', 88),
+  mkCase(1, 9,  '松山火鍋店冷凍配電',     '頂鍋食品',         '53212539', 'ok',     '已付款', 92500,  '台北 · 松山', 100),
+  mkCase(2, 6,  '林口集合住宅熱水管線',   '日盛營造',         '86517312', 'active', '進行中', 186700, '新北 · 林口', 41),
+  mkCase(2, 2,  '板橋誠品門市照明更新',   '誠品生活',         '23222367', 'ok',     '已付款', 64200,  '新北 · 板橋', 100),
+  mkCase(4, 14, '中山診所配電更新',       '安禾醫療',         '42566717', 'ok',     '已付款', 138600, '台北 · 中山', 100),
+  mkCase(5, 7,  '內湖廠房高架配管',       '華立精機',         '12786413', 'ok',     '已付款', 264500, '台北 · 內湖', 100),
+  mkCase(7, 16, '天母住宅浴室翻新',       '張公館',           '',         'ok',     '已付款', 88700,  '台北 · 士林', 100),
+  mkCase(8, 5,  '南港倉儲照明工程',       '聯運物流',         '45000103', 'ok',     '已付款', 118200, '台北 · 南港', 100),
+  mkCase(10, 12,'竹北接待中心水電',       '遠成建設',         '80333857', 'ok',     '已付款', 342000, '新竹 · 竹北', 100),
+  mkCase(11, 9, '老屋全室管線重拉',       '陳公館',           '',         'ok',     '已付款', 154800, '台北 · 大同', 100),
 ];
 
 export const MATERIALS = [
@@ -39,36 +61,40 @@ export const QUOTES = [
   { id: 'Q-2025-0406-A', caseId: '#2025-0406', case: '林口集合住宅熱水管線', version: 'v2', status: 'alert', statusLabel: '逾期未簽', amount: 186700, issued: '04/06', valid: '04/16' },
 ];
 
-// 請款單種子（BILLING）
+// 請款單種子（BILLING）— 以案件為本，鋪滿近 12 個月
+// issued/due/paid: [幾個月前, 日]；paid 為 null 表示未收款，逾期以 dueAt < 今天 自動判斷
+const mkInv = (n, caseRef, stage, amount, issued, due, paid) => {
+  const c = CASES_SEED.find(x => x.name === caseRef);
+  const issuedAt = monthsAgo(issued[0], issued[1]);
+  const dueAt = monthsAgo(due[0], due[1]);
+  const paidAt = paid ? monthsAgo(paid[0], paid[1]) : null;
+  const overdue = !paidAt && dueAt < isoOf(new Date());
+  return {
+    id: `B-${c.id.replace('#', '')}-${n}`,
+    caseId: c.id, case: c.name, client: c.client.split(' · ')[0], gui: c.gui,
+    stage, amount, issuedAt, dueAt, paidAt,
+    status: paidAt ? 'ok' : overdue ? 'alert' : 'warn',
+    statusLabel: paidAt ? '已收款' : overdue ? '逾期未收' : '待收款',
+  };
+};
+
 export const INVOICES_SEED = [
-  { id: 'B-2025-0411-2', caseId: '#2025-0411', case: '文心飯店地下機房配管', client: '文心國際酒店', gui: '20828393', stage: '第二期 · 完工款', amount: 156400, issued: '04/20', due: '05/05', status: 'alert', statusLabel: '逾期未收' },
-  { id: 'B-2025-0418-1', caseId: '#2025-0418', case: '大明商辦 3F 配電工程', client: '大明建設', gui: '84149961', stage: '第一期 · 訂金 50%', amount: 64200, issued: '04/19', due: '05/19', status: 'warn', statusLabel: '待收款' },
-  { id: 'B-2025-0409-1', caseId: '#2025-0409', case: '松山火鍋店冷凍配電', client: '頂鍋食品', gui: '53212539', stage: '全額 · 一次付清', amount: 92500, issued: '04/10', due: '04/25', status: 'ok', statusLabel: '已收款' },
-  { id: 'B-2025-0402-1', caseId: '#2025-0402', case: '板橋誠品門市照明更新', client: '誠品生活', gui: '23222367', stage: '全額 · 一次付清', amount: 64200, issued: '04/04', due: '04/18', status: 'ok', statusLabel: '已收款' },
-];
-
-// 近 12 個月（05月 = 去年 5 月，依序到今年 4 月）
-export const MONTHLY = [
-  { m: '05月', rev: 640, cost: 402 },
-  { m: '06月', rev: 578, cost: 366 },
-  { m: '07月', rev: 655, cost: 391 },
-  { m: '08月', rev: 690, cost: 424 },
-  { m: '09月', rev: 587, cost: 355 },
-  { m: '10月', rev: 612, cost: 384 },
-  { m: '11月', rev: 548, cost: 362 },
-  { m: '12月', rev: 724, cost: 441 },
-  { m: '01月', rev: 680, cost: 412 },
-  { m: '02月', rev: 512, cost: 318 },
-  { m: '03月', rev: 798, cost: 476 },
-  { m: '04月', rev: 842, cost: 498 },
-];
-
-export const CLIENT_DIST = [
-  { name: '大明建設', value: 328, pct: 28 },
-  { name: '文心酒店', value: 312, pct: 27 },
-  { name: '日盛營造', value: 186, pct: 16 },
-  { name: '誠品生活', value: 128, pct: 11 },
-  { name: '其他 12 家', value: 204, pct: 18 },
+  mkInv(1, '大明商辦 3F 配電工程', '第一期 · 訂金 50%', 64200,  [0, 10], [-1, 10], null),
+  mkInv(2, '大明商辦 3F 配電工程', '追加工程款',        21500,  [0, 8],  [-1, 8],  null),
+  mkInv(1, '文心飯店地下機房配管', '第二期 · 完工款',   156400, [1, 20], [1, 28],  null),
+  mkInv(2, '文心飯店地下機房配管', '第一期 · 訂金 50%', 156400, [3, 12], [2, 12],  [3, 26]),
+  mkInv(1, '松山火鍋店冷凍配電',   '全額 · 一次付清',   92500,  [1, 10], [1, 25],  [1, 24]),
+  mkInv(1, '林口集合住宅熱水管線', '第一期 · 訂金 50%', 93400,  [2, 8],  [1, 8],   [2, 20]),
+  mkInv(1, '板橋誠品門市照明更新', '全額 · 一次付清',   64200,  [2, 4],  [1, 4],   [2, 18]),
+  mkInv(1, '中山診所配電更新',     '全額 · 一次付清',   138600, [4, 16], [3, 16],  [4, 27]),
+  mkInv(1, '內湖廠房高架配管',     '第一期 · 訂金 50%', 132300, [5, 9],  [4, 9],   [5, 21]),
+  mkInv(2, '內湖廠房高架配管',     '第二期 · 完工款',   132200, [5, 22], [4, 22],  [4, 8]),
+  mkInv(1, '天母住宅浴室翻新',     '全額 · 一次付清',   88700,  [7, 18], [6, 18],  [6, 2]),
+  mkInv(1, '南港倉儲照明工程',     '第一期 · 訂金 50%', 59100,  [8, 7],  [7, 7],   [8, 19]),
+  mkInv(2, '南港倉儲照明工程',     '第二期 · 完工款',   59100,  [8, 24], [7, 24],  [7, 6]),
+  mkInv(1, '竹北接待中心水電',     '第一期 · 訂金 50%', 171000, [10, 14],[9, 14],  [10, 27]),
+  mkInv(2, '竹北接待中心水電',     '第二期 · 完工款',   171000, [9, 5],  [8, 5],   [9, 19]),
+  mkInv(1, '老屋全室管線重拉',     '全額 · 一次付清',   154800, [11, 11],[10, 11], [11, 25]),
 ];
 
 // 報價單抬頭（工程行自家資料 — 之後移到設定頁）
