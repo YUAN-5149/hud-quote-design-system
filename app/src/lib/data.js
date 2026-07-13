@@ -47,7 +47,13 @@ export const INVOICES_SEED = [
   { id: 'B-2025-0402-1', caseId: '#2025-0402', case: '板橋誠品門市照明更新', client: '誠品生活', gui: '23222367', stage: '全額 · 一次付清', amount: 64200, issued: '04/04', due: '04/18', status: 'ok', statusLabel: '已收款' },
 ];
 
+// 近 12 個月（05月 = 去年 5 月，依序到今年 4 月）
 export const MONTHLY = [
+  { m: '05月', rev: 640, cost: 402 },
+  { m: '06月', rev: 578, cost: 366 },
+  { m: '07月', rev: 655, cost: 391 },
+  { m: '08月', rev: 690, cost: 424 },
+  { m: '09月', rev: 587, cost: 355 },
   { m: '10月', rev: 612, cost: 384 },
   { m: '11月', rev: 548, cost: 362 },
   { m: '12月', rev: 724, cost: 441 },

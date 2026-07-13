@@ -410,11 +410,14 @@ export function MaterialsScreen() {
 // ─────────────────────────────────────────────────────────────
 // REPORTS
 // ─────────────────────────────────────────────────────────────
+const RANGE_MONTHS = { '3m': 3, '6m': 6, '1y': 12 };
+
 export function ReportsScreen() {
-  const [range, setRange] = useState('7m');
-  const maxVal = Math.max(...MONTHLY.map(m => m.rev));
-  const totalRev = MONTHLY.reduce((s,m) => s + m.rev, 0);
-  const totalCost = MONTHLY.reduce((s,m) => s + m.cost, 0);
+  const [range, setRange] = useState('6m');
+  const months = MONTHLY.slice(-RANGE_MONTHS[range]);
+  const maxVal = Math.max(...months.map(m => m.rev));
+  const totalRev = months.reduce((s,m) => s + m.rev, 0);
+  const totalCost = months.reduce((s,m) => s + m.cost, 0);
   const margin = ((totalRev - totalCost) / totalRev * 100).toFixed(1);
 
   return (
@@ -423,7 +426,7 @@ export function ReportsScreen() {
         <h1 className="screen-title">營運報表 // REPORTS</h1>
         <div className="screen-actions">
           <div className="cat-tabs">
-            {[['3m','近 3 月'],['7m','近 7 月'],['1y','近一年']].map(([v,l]) => (
+            {[['3m','近 3 月'],['6m','近 6 月'],['1y','近一年']].map(([v,l]) => (
               <button key={v} className={`cat-tab ${range===v?'active':''}`} onClick={() => setRange(v)}>{l}</button>
             ))}
           </div>
@@ -439,10 +442,10 @@ export function ReportsScreen() {
       </div>
 
       <div className="two-col">
-        <Panel title="月營收對比" meta="REVENUE · COST · 千元">
+        <Panel title="月營收對比" meta={`REVENUE · COST · 千元 · ${months.length} 個月`}>
           <div className="chart-wrap">
-            <div className="chart-bars">
-              {MONTHLY.map(m => {
+            <div className="chart-bars" style={{ gridTemplateColumns: `repeat(${months.length}, 1fr)` }}>
+              {months.map(m => {
                 const hR = (m.rev / maxVal) * 100;
                 const hC = (m.cost / maxVal) * 100;
                 return (
