@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="HUD Panel" subtitle="Notched panel with display numerals" viewport="700x200" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>HUD Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 20px; background: var(--bg-base); display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--line-base);
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    padding: 14px 16px;
+    position: relative;
+  }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line-faint); padding-bottom: 8px; margin-bottom: 10px; }
+  .panel-title { font-family: var(--font-mono); font-size: 10px; color: var(--accent); letter-spacing: 0.24em; text-transform: uppercase; }
+  .panel-meta { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); letter-spacing: 0.1em; }
+  .num { font-family: 'Orbitron'; font-size: 36px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--fg-1); letter-spacing: -0.01em; line-height: 1; }
+  .sub { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 6px; }
+  .delta { font-family: var(--font-mono); font-size: 11px; color: var(--ok); margin-top: 10px; letter-spacing: 0.1em; }
+  .bracket-active { box-shadow: 0 0 0 1px var(--line-active), 0 0 24px -8px var(--accent-glow); }
+</style>
+</head>
+<body>
+  <div class="panel bracket-active">
+    <div class="panel-header">
+      <span class="panel-title">本月收款</span>
+      <span class="panel-meta">2026 · APR</span>
+    </div>
+    <div class="num">NT$ 842,300</div>
+    <div class="sub">TOTAL RECEIVED</div>
+    <div class="delta">▲ +12.4% · 月增 NT$ 92,800</div>
+  </div>
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">進行中案件</span>
+      <span class="panel-meta">LIVE · 17 NODES</span>
+    </div>
+    <div class="num" style="color:var(--accent)">17</div>
+    <div class="sub">ACTIVE CASES</div>
+    <div class="delta" style="color:var(--warn)">▲ 3 待確認 · 2 逾期</div>
+  </div>
+</body>
+</html>

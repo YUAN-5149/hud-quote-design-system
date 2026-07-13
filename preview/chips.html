@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Status Chips" subtitle="State pills and mono code tags" viewport="700x140" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Status Chips</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 24px; background: var(--bg-panel); display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .chip {
+    font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 5px 10px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .c-ok { color: var(--ok); background: var(--ok-tint); border-color: var(--ok); }
+  .c-warn { color: var(--warn); background: var(--warn-tint); border-color: var(--warn); }
+  .c-alert { color: var(--alert); background: var(--alert-tint); border-color: var(--alert); }
+  .c-info { color: var(--accent); background: var(--accent-tint); border-color: var(--line-active); }
+  .c-dim { color: var(--fg-3); background: transparent; border-color: var(--line-base); }
+  .tag-label { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); letter-spacing: 0.2em; text-transform: uppercase; width: 70px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="tag-label">狀態</div>
+    <span class="chip c-ok"><span class="dot" style="background:var(--ok);box-shadow:0 0 6px var(--ok-glow)"></span>已付款</span>
+    <span class="chip c-warn"><span class="dot" style="background:var(--warn);box-shadow:0 0 6px var(--warn-glow)"></span>待確認</span>
+    <span class="chip c-alert"><span class="dot" style="background:var(--alert);box-shadow:0 0 6px var(--alert-glow)"></span>逾期</span>
+    <span class="chip c-info"><span class="dot" style="background:var(--accent);box-shadow:0 0 6px var(--accent-glow)"></span>進行中</span>
+    <span class="chip c-dim"><span class="dot" style="background:var(--fg-3)"></span>草稿</span>
+  </div>
+  <div class="row">
+    <div class="tag-label">代碼</div>
+    <span class="chip c-info" style="border-radius:2px">CASE-2025-0418</span>
+    <span class="chip c-dim" style="border-radius:2px">NODE · TPE-003</span>
+    <span class="chip c-warn" style="border-radius:2px">LOCKED · 03:42</span>
+  </div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Text Colors" subtitle="FG 1–4 on panel surface" viewport="700x160" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Text Colors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 20px; background: var(--bg-base); }
+  .stack { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .row { border: 1px solid var(--line-base); background: var(--bg-panel); padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .sample-tc { font-family: var(--font-tc); font-size: 18px; font-weight: 500; }
+  .sample-en { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .meta { font-family: var(--font-mono); font-size: 9px; color: var(--fg-3); letter-spacing: 0.1em; text-transform: uppercase; display: flex; justify-content: space-between; padding-top: 6px; border-top: 1px solid var(--line-faint); }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="row">
+      <div class="sample-tc" style="color:#E6F1FF">報價單</div>
+      <div class="sample-en" style="color:#E6F1FF">ACTIVE DATA</div>
+      <div class="meta"><span>FG · 1</span><span style="color:#00E5FF">#E6F1FF</span></div>
+    </div>
+    <div class="row">
+      <div class="sample-tc" style="color:#A8B8D0">報價單</div>
+      <div class="sample-en" style="color:#A8B8D0">BODY TEXT</div>
+      <div class="meta"><span>FG · 2</span><span style="color:#00E5FF">#A8B8D0</span></div>
+    </div>
+    <div class="row">
+      <div class="sample-tc" style="color:#7A8DA6">報價單</div>
+      <div class="sample-en" style="color:#7A8DA6">METADATA</div>
+      <div class="meta"><span>FG · 3</span><span style="color:#00E5FF">#7A8DA6</span></div>
+    </div>
+    <div class="row">
+      <div class="sample-tc" style="color:#3D4B63">報價單</div>
+      <div class="sample-en" style="color:#3D4B63">DISABLED</div>
+      <div class="meta"><span>FG · 4</span><span style="color:#00E5FF">#3D4B63</span></div>
+    </div>
+  </div>
+</body>
+</html>

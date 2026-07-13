@@ -1,0 +1,100 @@
+/* ── 共用補充 ─────────────────────────────────────────────── */
+.table-scroll { overflow-x: auto; }
+.table-scroll .data-table { min-width: 560px; }
+
+.calc-upper {
+  margin: 10px 0 4px;
+  color: var(--fg-2);
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: 0.05em;
+}
+
+/* ── 平板 ≤ 1024px ───────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .two-col { grid-template-columns: minmax(0, 1fr); }
+  .quote-layout { grid-template-columns: minmax(0, 1fr); }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .quote-side { position: static; }
+}
+
+/* ── 手機 ≤ 768px：rail 轉為底部導航 ────────────────────── */
+@media (max-width: 768px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 48px 1fr 56px;
+    grid-template-areas: 'topbar' 'main' 'rail';
+  }
+
+  .rail {
+    grid-area: rail;
+    flex-direction: row;
+    width: auto;
+    height: 56px;
+    padding: 0 4px;
+    border-right: none;
+    border-top: 1px solid var(--line-base);
+    overflow-x: auto;
+    align-items: center;
+    z-index: 40;
+    background: #060C16;
+  }
+  .rail-logo { display: none; }
+  .rail-btn {
+    flex: 1 0 auto;
+    min-width: 56px;
+    height: 48px;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 6px;
+  }
+  .rail-btn-lbl {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  .rail-btn-settings { display: none; }
+  .rail > div[style] { display: none; } /* flex spacer */
+
+  .topbar { grid-area: topbar; padding: 0 12px; height: 48px; }
+  .tb-hide-sm { display: none !important; }
+  .breadcrumb .mono-label:first-child { display: none; }
+  .breadcrumb .bc-sep { display: none; }
+
+  .main { grid-area: main; padding: 14px 12px 20px; }
+  .statusbar { display: none; }
+
+  .screen-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .screen-title { font-size: 18px; }
+  .screen-actions { flex-wrap: wrap; }
+  .screen-actions .searchbar { flex: 1 1 100%; }
+
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px; }
+  .metric-value { font-size: 20px; }
+
+  /* 觸控友善 */
+  .btn { min-height: 40px; }
+  .data-table td { padding-top: 10px; padding-bottom: 10px; }
+  .input { min-height: 40px; }
+
+  .quote-meta-grid { grid-template-columns: 1fr; }
+  .modal { width: calc(100vw - 24px) !important; max-height: 86vh; overflow-y: auto; }
+  .hud-modal { width: calc(100vw - 24px) !important; }
+
+  /* 登入頁 */
+  .login-shell { width: calc(100vw - 32px); }
+  .login-row { grid-template-columns: 1fr; }
+  .login-meta-row { grid-template-columns: repeat(2, 1fr); }
+  .login-foot { flex-direction: column; gap: 4px; align-items: center; }
+}
+
+/* ── 窄手機 ≤ 420px ──────────────────────────────────────── */
+@media (max-width: 420px) {
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-bars { gap: 6px; }
+}

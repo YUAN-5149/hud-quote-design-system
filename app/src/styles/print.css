@@ -1,0 +1,114 @@
+/* ── 報價單列印版型：白底正式文件 ─────────────────────────── */
+.print-quote { display: none; }
+
+@media print {
+  @page { size: A4; margin: 14mm 12mm; }
+
+  body { background: #fff !important; }
+  body::before, body::after { display: none !important; }
+  #root { display: none !important; }
+
+  .print-quote {
+    display: block;
+    color: #111;
+    font-family: 'Noto Sans TC', 'Inter', sans-serif;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .pq-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #111;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+  }
+  .pq-head h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: 0.08em;
+  }
+  .pq-co-meta { font-size: 10.5px; color: #444; }
+  .pq-doc { text-align: right; }
+  .pq-doc-title {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.35em;
+    margin-bottom: 6px;
+  }
+  .pq-doc-meta { font-size: 10.5px; color: #444; }
+  .pq-doc-meta span { display: block; }
+
+  .pq-info {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    font-size: 11.5px;
+  }
+  .pq-info th, .pq-info td {
+    border: 1px solid #999;
+    padding: 5px 8px;
+    text-align: left;
+  }
+  .pq-info th {
+    background: #f0f0f0;
+    width: 76px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .pq-items {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    margin-bottom: 10px;
+  }
+  .pq-items th, .pq-items td {
+    border: 1px solid #999;
+    padding: 5px 8px;
+  }
+  .pq-items thead th {
+    background: #e8e8e8;
+    font-weight: 600;
+    text-align: center;
+  }
+  .pq-items .ctr { text-align: center; }
+  .pq-items .rgt { text-align: right; font-variant-numeric: tabular-nums; }
+  .pq-items tfoot td { font-weight: 500; }
+  .pq-items .pq-total td {
+    font-weight: 700;
+    font-size: 13px;
+    background: #f0f0f0;
+  }
+
+  .pq-upper {
+    border: 1px solid #999;
+    border-top: none;
+    padding: 6px 8px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    margin-top: -10px;
+  }
+
+  .pq-notes {
+    font-size: 10.5px;
+    color: #333;
+    padding-left: 18px;
+    margin: 0 0 28px;
+  }
+  .pq-notes li { margin-bottom: 3px; }
+
+  .pq-sign {
+    display: flex;
+    gap: 32px;
+    margin-top: 16px;
+  }
+  .pq-sign > div { flex: 1; font-size: 11px; }
+  .pq-sign-line {
+    border-bottom: 1px solid #111;
+    height: 40px;
+    margin-top: 4px;
+  }
+}

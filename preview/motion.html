@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Spacing" name="Motion" subtitle="Scan sweep + indeterminate bar" viewport="700x180" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Motion / Scan Line</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 20px; background: var(--bg-base); display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: var(--bg-panel); border: 1px solid var(--line-base); padding: 14px; clip-path: polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px); overflow: hidden; position: relative; }
+  .lbl { font-family: var(--font-mono); font-size: 9px; color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 10px; }
+  .num { font-family: 'Orbitron'; font-size: 28px; font-weight: 700; color: var(--fg-1); letter-spacing: -0.01em; }
+  .scan::after {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 60%;
+    background: linear-gradient(90deg, transparent, rgba(0,229,255,0.08), transparent);
+    animation: scan 2.4s cubic-bezier(0.65,0,0.35,1) infinite;
+    pointer-events: none;
+  }
+  @keyframes scan { 0% { left: -60%; } 100% { left: 100%; } }
+  .bar { height: 3px; background: var(--bg-panel-2); overflow: hidden; margin-top: 12px; }
+  .bar::after { content: ''; display: block; height: 100%; width: 30%; background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); animation: slide 1.6s ease-in-out infinite; }
+  @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
+  .sub { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <div class="card scan">
+    <div class="lbl">SCAN · SWEEP</div>
+    <div class="num">NT$ 128,400</div>
+    <div class="sub">HORIZONTAL SCAN ON LOAD</div>
+  </div>
+  <div class="card">
+    <div class="lbl">PROGRESS · INDETERMINATE</div>
+    <div style="font-family:var(--font-mono);font-size:12px;color:var(--fg-2);letter-spacing:0.1em">COMPUTING ESTIMATE · · ·</div>
+    <div class="bar"></div>
+    <div class="sub">DUR 1.6S · EASE-IN-OUT</div>
+  </div>
+</body>
+</html>

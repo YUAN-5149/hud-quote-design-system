@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Type" name="Mono & Numeric" subtitle="JetBrains Mono readouts + tabular numerals" viewport="700x180" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Type · Mono & Numeric</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 20px; background: var(--bg-panel); display: flex; gap: 24px; align-items: stretch; }
+  .col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .label { font-family: var(--font-mono); font-size: 9px; color: var(--fg-3); letter-spacing: 0.2em; text-transform: uppercase; }
+  .big { font-family: 'Orbitron'; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--fg-1); font-size: 48px; line-height: 1; letter-spacing: -0.01em; }
+  .mid { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--accent); font-size: 22px; line-height: 1; }
+  .small { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--fg-2); font-size: 13px; letter-spacing: 0.05em; }
+  .sep { width: 1px; background: var(--line-base); }
+</style>
+</head>
+<body>
+  <div class="col">
+    <div class="label">NUMERIC · DISPLAY</div>
+    <div class="big">NT$ 128,400</div>
+    <div class="small" style="color:var(--fg-3)">ORBITRON · TABULAR NUMS · 48PX</div>
+  </div>
+  <div class="sep"></div>
+  <div class="col">
+    <div class="label">MONO · READOUT</div>
+    <div class="mid">#2025-0418</div>
+    <div class="mid" style="color:var(--warn)">LOCKED · 03:42</div>
+    <div class="small">JETBRAINS MONO · TABULAR</div>
+  </div>
+  <div class="sep"></div>
+  <div class="col">
+    <div class="label">INLINE CODE</div>
+    <div class="small" style="color:var(--fg-1)">STATUS · ACTIVE</div>
+    <div class="small" style="color:var(--fg-1)">NODE · TPE-003</div>
+    <div class="small" style="color:var(--fg-1)">42 KW · 3.5 HR</div>
+  </div>
+</body>
+</html>
