@@ -92,7 +92,7 @@ function PrintQuote({ info, items, subtotal, tax, total, taxInc }) {
 // ─────────────────────────────────────────────────────────────
 // QUOTE BUILDER
 // ─────────────────────────────────────────────────────────────
-export function QuoteBuilder({ caseData, quote, onClose, onSave }) {
+export function QuoteBuilder({ caseData, quote, materials, onClose, onSave }) {
   const [items, setItems] = useState(quote?.items?.length ? quote.items : LINE_ITEMS_INIT);
   const [taxInc, setTaxInc] = useState(quote?.taxInc ?? true);
   const [addOpen, setAddOpen] = useState(false);
@@ -220,7 +220,7 @@ export function QuoteBuilder({ caseData, quote, onClose, onSave }) {
         </aside>
       </div>
 
-      <AddLineItemModal open={addOpen} onClose={() => setAddOpen(false)} onAdd={addItem} />
+      <AddLineItemModal open={addOpen} onClose={() => setAddOpen(false)} onAdd={addItem} materials={materials} />
       <PrintQuote info={info} items={items} subtotal={subtotal} tax={tax} total={total} taxInc={taxInc} />
     </div>
   );

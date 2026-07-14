@@ -71,11 +71,11 @@ export function NewCaseModal({ open, onClose, onCreate }) {
 // ─────────────────────────────────────────────────────────────
 // ADD LINE-ITEM MODAL
 // ─────────────────────────────────────────────────────────────
-export function AddLineItemModal({ open, onClose, onAdd }) {
+export function AddLineItemModal({ open, onClose, onAdd, materials = MATERIALS }) {
   const [mode, setMode] = useState('catalog'); // 'catalog' | 'custom'
   const [q, setQ] = useState('');
   const [custom, setCustom] = useState({ name: '', cat: '配電', unit: '個', qty: 1, price: 0 });
-  const filtered = MATERIALS.filter(m => m.name.includes(q) || m.code.includes(q));
+  const filtered = materials.filter(m => m.name.includes(q) || m.code.includes(q));
 
   const addFromCatalog = (m) => {
     onAdd({
@@ -117,7 +117,7 @@ export function AddLineItemModal({ open, onClose, onAdd }) {
           <div className="searchbar" style={{ marginBottom: 12 }}>
             <Icon name="search" size={14} />
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="SEARCH · 品項 / 代碼" autoFocus />
-            <span className="mono-label" style={{ color: 'var(--fg-3)' }}>{filtered.length}/{MATERIALS.length}</span>
+            <span className="mono-label" style={{ color: 'var(--fg-3)' }}>{filtered.length}/{materials.length}</span>
           </div>
           <div className="pick-list">
             {filtered.map(m => (
@@ -444,13 +444,91 @@ export function QuotesList({ quotes = [], onNewQuote, onOpenQuote, onSign, onCon
 // ─────────────────────────────────────────────────────────────
 // MATERIALS
 // ─────────────────────────────────────────────────────────────
-export function MaterialsScreen() {
+// 新增品項 — 代碼可留空自動編號
+const CODE_PREFIX = { '配電': 'PWR', '電線': 'WIRE', '管材': 'PIPE', '工資': 'LBR', '雜項': 'MISC' };
+
+function NewMaterialModal({ open, onClose, onAdd, materials }) {
+  const blank = { code: '', name: '', cat: '配電', unit: '個', price: '', stock: '' };
+  const [form, setForm] = useState(blank);
+  const [err, setErr] = useState({});
+  const isLabor = form.cat === '工資';
+
+  const pickCat = (v) => setForm({ ...form, cat: v, unit: v === '工資' ? '工時' : form.unit === '工時' ? '個' : form.unit });
+
+  const autoCode = () => {
+    const prefix = CODE_PREFIX[form.cat] || 'ITM';
+    let n = materials.filter(m => m.code.startsWith(prefix + '-')).length + 1;
+    while (materials.some(m => m.code === `${prefix}-${String(n).padStart(3, '0')}`)) n++;
+    return `${prefix}-${String(n).padStart(3, '0')}`;
+  };
+
+  const submit = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = '請輸入品名';
+    if (!(+form.price > 0)) e.price = '請輸入單價';
+    const code = form.code.trim().toUpperCase() || autoCode();
+    if (materials.some(m => m.code === code)) e.code = '代碼已存在';
+    if (!isLabor && form.stock !== '' && +form.stock < 0) e.stock = '庫存不可為負';
+    setErr(e);
+    if (Object.keys(e).length) return;
+    onAdd({
+      code,
+      name: form.name.trim(),
+      cat: form.cat,
+      unit: form.unit.trim() || (isLabor ? '工時' : '個'),
+      price: +form.price,
+      stock: isLabor ? '—' : (+form.stock || 0),
+    });
+    setForm(blank);
+    setErr({});
+    onClose();
+  };
+
+  return (
+    <Modal
+      open={open} onClose={onClose}
+      title="新增品項 · NEW SKU" meta="CATALOG" width={560}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>取消</Button>
+          <Button variant="primary" icon="check" onClick={submit}>加入材料庫</Button>
+        </>
+      }
+    >
+      <div className="quote-meta-grid">
+        <Field label="品名 · NAME" error={err.name}>
+          <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="無熔絲開關 NFB 2P 20A" autoFocus />
+        </Field>
+        <Field label="類別 · CATEGORY">
+          <Select value={form.cat} onChange={pickCat} options={['配電','電線','管材','工資','雜項'].map(c => ({ value: c, label: c }))} />
+        </Field>
+        <Field label="代碼 · CODE" error={err.code} helper={form.code.trim() ? '' : `留空自動編號：${autoCode()}`}>
+          <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="NFB-2P-20" className="input mono" />
+        </Field>
+        <Field label="單位 · UNIT">
+          <Input value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} placeholder={isLabor ? '工時' : '個'} />
+        </Field>
+        <Field label="單價 · UNIT PRICE" error={err.price}>
+          <Input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="450" inputMode="numeric" />
+        </Field>
+        {!isLabor && (
+          <Field label="期初庫存 · STOCK" error={err.stock} helper="選填，預設 0">
+            <Input type="number" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} placeholder="0" inputMode="numeric" />
+          </Field>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+export function MaterialsScreen({ materials = MATERIALS, onAdd }) {
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('all');
-  const filtered = MATERIALS.filter(m =>
+  const [addOpen, setAddOpen] = useState(false);
+  const filtered = materials.filter(m =>
     (cat === 'all' || m.cat === cat) && (m.name.includes(q) || m.code.includes(q))
   );
-  const stockItems = MATERIALS.filter(m => typeof m.stock === 'number');
+  const stockItems = materials.filter(m => typeof m.stock === 'number');
   const totalValue = stockItems.reduce((s, m) => s + m.stock * m.price, 0);
 
   // 分類儀表板統計（不含工資 — 工資無庫存價值）
@@ -474,11 +552,11 @@ export function MaterialsScreen() {
         <h1 className="screen-title">材料庫 // MATERIALS</h1>
         <div className="screen-actions">
           <Button variant="ghost" icon="download">匯出清單</Button>
-          <Button variant="primary" icon="plus">新增品項</Button>
+          <Button variant="primary" icon="plus" onClick={() => setAddOpen(true)}>新增品項</Button>
         </div>
       </div>
       <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-        <Panel title="品項總數" meta="CATALOG" accent><Metric label="SKUS" value={MATERIALS.length} accent /></Panel>
+        <Panel title="品項總數" meta="CATALOG" accent><Metric label="SKUS" value={materials.length} accent /></Panel>
         <Panel title="庫存價值" meta="VALUE"><Metric label="ON-HAND" value={fmt(totalValue)} /></Panel>
         <Panel title="低庫存" meta="< 10"><Metric label="LOW STOCK" value={stockItems.filter(m => m.stock > 0 && m.stock < 10).length} delta="建議補貨" deltaKind="warn" /></Panel>
         <Panel title="缺貨" meta="ZERO"><Metric label="OUT" value={stockItems.filter(m => m.stock === 0).length} delta="立即補貨" deltaKind="alert" /></Panel>
@@ -571,6 +649,7 @@ export function MaterialsScreen() {
           </table>
         </div>
       </Panel>
+      <NewMaterialModal open={addOpen} onClose={() => setAddOpen(false)} onAdd={onAdd} materials={materials} />
     </div>
   );
 }
