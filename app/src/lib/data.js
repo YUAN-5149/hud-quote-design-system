@@ -30,19 +30,27 @@ export const CASES_SEED = [
   mkCase(11, 9, '老屋全室管線重拉',       '陳公館',           '',         'ok',     '已付款', 154800, '台北 · 大同', 100),
 ];
 
+// 類別：配電（開關／配電盤）、電線、管材（電管／銅管）、工資
 export const MATERIALS = [
-  { code: 'NFB-3P-100', name: '無熔絲開關 NFB 3P 100A', cat: '材料', unit: '個', price: 2850, stock: 12 },
-  { code: 'NFB-2P-30',  name: '無熔絲開關 NFB 2P 30A',  cat: '材料', unit: '個', price: 680, stock: 34 },
-  { code: 'PVC-1-4M',   name: 'PVC 電管 1" × 4m',        cat: '材料', unit: '支', price: 180, stock: 128 },
-  { code: 'PVC-3-4-4M', name: 'PVC 電管 3/4" × 4m',      cat: '材料', unit: '支', price: 140, stock: 82 },
-  { code: 'PNL-60-80',  name: '配電盤 600×800 烤漆',    cat: '材料', unit: '座', price: 18500, stock: 3 },
-  { code: 'WIRE-5-5',   name: '電線 5.5 平方 × 100m',   cat: '材料', unit: '捲', price: 3200, stock: 18 },
-  { code: 'WIRE-2-0',   name: '電線 2.0 平方 × 100m',   cat: '材料', unit: '捲', price: 1400, stock: 24 },
-  { code: 'PIPE-CU-15', name: '銅管 15A × 3m',           cat: '材料', unit: '支', price: 520, stock: 0 },
+  { code: 'NFB-3P-100', name: '無熔絲開關 NFB 3P 100A', cat: '配電', unit: '個', price: 2850, stock: 12 },
+  { code: 'NFB-2P-30',  name: '無熔絲開關 NFB 2P 30A',  cat: '配電', unit: '個', price: 680, stock: 34 },
+  { code: 'PVC-1-4M',   name: 'PVC 電管 1" × 4m',        cat: '管材', unit: '支', price: 180, stock: 128 },
+  { code: 'PVC-3-4-4M', name: 'PVC 電管 3/4" × 4m',      cat: '管材', unit: '支', price: 140, stock: 82 },
+  { code: 'PNL-60-80',  name: '配電盤 600×800 烤漆',    cat: '配電', unit: '座', price: 18500, stock: 3 },
+  { code: 'WIRE-5-5',   name: '電線 5.5 平方 × 100m',   cat: '電線', unit: '捲', price: 3200, stock: 18 },
+  { code: 'WIRE-2-0',   name: '電線 2.0 平方 × 100m',   cat: '電線', unit: '捲', price: 1400, stock: 24 },
+  { code: 'PIPE-CU-15', name: '銅管 15A × 3m',           cat: '管材', unit: '支', price: 520, stock: 0 },
   { code: 'LBR-ELEC-S', name: '配管施工 · 資深師傅',    cat: '工資', unit: '工時', price: 1200, stock: '—' },
   { code: 'LBR-ELEC-J', name: '配管施工 · 助手',        cat: '工資', unit: '工時', price: 700, stock: '—' },
   { code: 'LBR-GND',    name: '接地測試 · 現場驗收',    cat: '工資', unit: '式', price: 4500, stock: '—' },
   { code: 'LBR-PLB',    name: '給排水配管施工',          cat: '工資', unit: '工時', price: 1100, stock: '—' },
+];
+
+// 材料分類（不含工資）— 儀表板與篩選共用；顏色為同色系深淺，符合 HUD 用色節制原則
+export const MATERIAL_CATS = [
+  { name: '配電', color: 'rgba(0, 229, 255, 0.95)' },
+  { name: '電線', color: 'rgba(0, 229, 255, 0.55)' },
+  { name: '管材', color: 'rgba(0, 229, 255, 0.25)' },
 ];
 
 export const LINE_ITEMS_INIT = [

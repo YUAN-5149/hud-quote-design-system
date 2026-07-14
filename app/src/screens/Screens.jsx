@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Panel, Metric, Chip, Button, Field, Input, Modal, Select, Icon } from '../components/Primitives.jsx';
-import { MATERIALS } from '../lib/data.js';
+import { MATERIALS, MATERIAL_CATS } from '../lib/data.js';
 import { fmt, fmtMD, todayISO, addDays } from '../lib/format.js';
 
 // ─────────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ export function NewCaseModal({ open, onClose, onCreate }) {
 export function AddLineItemModal({ open, onClose, onAdd }) {
   const [mode, setMode] = useState('catalog'); // 'catalog' | 'custom'
   const [q, setQ] = useState('');
-  const [custom, setCustom] = useState({ name: '', cat: '材料', unit: '個', qty: 1, price: 0 });
+  const [custom, setCustom] = useState({ name: '', cat: '配電', unit: '個', qty: 1, price: 0 });
   const filtered = MATERIALS.filter(m => m.name.includes(q) || m.code.includes(q));
 
   const addFromCatalog = (m) => {
@@ -97,7 +97,7 @@ export function AddLineItemModal({ open, onClose, onAdd }) {
       price: +custom.price || 0,
       cat: custom.cat,
     });
-    setCustom({ name: '', cat: '材料', unit: '個', qty: 1, price: 0 });
+    setCustom({ name: '', cat: '配電', unit: '個', qty: 1, price: 0 });
     onClose();
   };
 
@@ -142,7 +142,9 @@ export function AddLineItemModal({ open, onClose, onAdd }) {
             </Field>
             <Field label="類別 · CATEGORY">
               <Select value={custom.cat} onChange={v => setCustom({ ...custom, cat: v })} options={[
-                { value: '材料', label: '材料' },
+                { value: '配電', label: '配電' },
+                { value: '電線', label: '電線' },
+                { value: '管材', label: '管材' },
                 { value: '工資', label: '工資' },
                 { value: '雜項', label: '雜項' },
               ]}/>
@@ -448,9 +450,23 @@ export function MaterialsScreen() {
   const filtered = MATERIALS.filter(m =>
     (cat === 'all' || m.cat === cat) && (m.name.includes(q) || m.code.includes(q))
   );
-  const totalValue = MATERIALS
-    .filter(m => typeof m.stock === 'number')
-    .reduce((s, m) => s + m.stock * m.price, 0);
+  const stockItems = MATERIALS.filter(m => typeof m.stock === 'number');
+  const totalValue = stockItems.reduce((s, m) => s + m.stock * m.price, 0);
+
+  // 分類儀表板統計（不含工資 — 工資無庫存價值）
+  const catStats = MATERIAL_CATS.map(c => {
+    const list = stockItems.filter(m => m.cat === c.name);
+    const value = list.reduce((s, m) => s + m.stock * m.price, 0);
+    return { ...c, skus: list.length, value, pct: totalValue ? Math.round(value / totalValue * 100) : 0 };
+  });
+  // conic-gradient 環圖分段
+  let acc = 0;
+  const donutStops = catStats.map(c => {
+    const from = acc;
+    acc += totalValue ? (c.value / totalValue) * 100 : 0;
+    return `${c.color} ${from}% ${acc}%`;
+  }).join(', ');
+  const maxStock = Math.max(...stockItems.map(m => m.stock), 1);
 
   return (
     <div className="screen" data-screen-label="Materials">
@@ -464,9 +480,56 @@ export function MaterialsScreen() {
       <div className="metric-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
         <Panel title="品項總數" meta="CATALOG" accent><Metric label="SKUS" value={MATERIALS.length} accent /></Panel>
         <Panel title="庫存價值" meta="VALUE"><Metric label="ON-HAND" value={fmt(totalValue)} /></Panel>
-        <Panel title="低庫存" meta="< 10"><Metric label="LOW STOCK" value={MATERIALS.filter(m => typeof m.stock === 'number' && m.stock < 10).length} delta="建議補貨" deltaKind="warn" /></Panel>
-        <Panel title="缺貨" meta="ZERO"><Metric label="OUT" value={MATERIALS.filter(m => m.stock === 0).length} delta="立即補貨" deltaKind="alert" /></Panel>
+        <Panel title="低庫存" meta="< 10"><Metric label="LOW STOCK" value={stockItems.filter(m => m.stock > 0 && m.stock < 10).length} delta="建議補貨" deltaKind="warn" /></Panel>
+        <Panel title="缺貨" meta="ZERO"><Metric label="OUT" value={stockItems.filter(m => m.stock === 0).length} delta="立即補貨" deltaKind="alert" /></Panel>
       </div>
+
+      <div className="two-col">
+        <Panel title="庫存水位" meta="STOCK LEVEL · 缺貨紅 · 低庫存黃">
+          <div className="stock-list">
+            {stockItems.map(m => {
+              const out = m.stock === 0;
+              const low = !out && m.stock < 10;
+              const w = Math.max((m.stock / maxStock) * 100, out ? 0 : 2);
+              return (
+                <div key={m.code} className="stock-row">
+                  <span className="mono stock-code">{m.code}</span>
+                  <span className="stock-name">{m.name}</span>
+                  <span className="tele-bar">
+                    <span className="tele-fill" style={{ width: w + '%', background: out ? 'var(--alert)' : low ? 'var(--warn)' : 'var(--accent)' }} />
+                  </span>
+                  <span className="mono stock-v" style={{ color: out ? 'var(--alert)' : low ? 'var(--warn)' : 'var(--fg-1)' }}>
+                    {m.stock} {m.unit}{out ? ' · 缺' : low ? ' · 低' : ''}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </Panel>
+
+        <Panel title="分類價值佔比" meta="BY CATEGORY">
+          <div className="donut-wrap">
+            <div className="donut" style={{ background: `conic-gradient(${donutStops})` }}>
+              <div className="donut-center">
+                <span className="mono-label" style={{ color: 'var(--fg-3)' }}>TOTAL</span>
+                <span className="donut-total mono">{Math.round(totalValue / 1000)}K</span>
+              </div>
+            </div>
+            <ul className="donut-legend">
+              {catStats.map(c => (
+                <li key={c.name}>
+                  <span className="dot-sq" style={{ background: c.color }} />
+                  <span className="donut-cat">{c.name}</span>
+                  <span className="mono row-sub">{c.skus} 項</span>
+                  <span className="mono donut-val">{fmt(c.value)}</span>
+                  <span className="mono" style={{ color: 'var(--accent)' }}>{c.pct}%</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Panel>
+      </div>
+
       <Panel title={`CATALOG · ${filtered.length} SKUS`} meta="LIVE">
         <div className="materials-toolbar" style={{ display: 'flex', gap: 10, marginBottom: 14, alignItems: 'center' }}>
           <div className="searchbar" style={{ flex: 1 }}>
@@ -474,7 +537,7 @@ export function MaterialsScreen() {
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="SEARCH · 品項 / 代碼" style={{ width: '100%' }}/>
           </div>
           <div className="cat-tabs">
-            {['all','材料','工資'].map(c => (
+            {['all','配電','電線','管材','工資'].map(c => (
               <button key={c} className={`cat-tab ${cat===c?'active':''}`} onClick={() => setCat(c)}>{c==='all'?'全部':c}</button>
             ))}
           </div>

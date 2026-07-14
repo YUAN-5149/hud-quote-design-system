@@ -10,6 +10,71 @@
   letter-spacing: 0.05em;
 }
 
+/* ── 材料庫儀表板 ─────────────────────────────────────────── */
+.stock-list { display: flex; flex-direction: column; gap: 9px; }
+.stock-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 130px 92px;
+  gap: 12px;
+  align-items: center;
+}
+.stock-code { font-size: 11px; color: var(--accent); }
+.stock-name {
+  font-family: var(--font-tc);
+  font-size: 12px;
+  color: var(--fg-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stock-v { font-size: 11px; text-align: right; font-variant-numeric: tabular-nums; }
+
+.donut-wrap { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+.donut {
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+.donut::before {
+  content: '';
+  position: absolute;
+  inset: 24px;
+  border-radius: 50%;
+  background: var(--bg-panel);
+  border: 1px solid var(--line-faint);
+}
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.donut-total { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--fg-1); }
+.donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-width: 200px;
+}
+.donut-legend li {
+  display: grid;
+  grid-template-columns: 10px 40px 44px 1fr 40px;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+}
+.donut-cat { font-family: var(--font-tc); color: var(--fg-1); }
+.donut-val { text-align: right; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+
 /* ── 平板 ≤ 1024px ───────────────────────────────────────── */
 @media (max-width: 1024px) {
   .two-col { grid-template-columns: minmax(0, 1fr); }
@@ -82,6 +147,9 @@
   .input { min-height: 40px; }
 
   .quote-meta-grid { grid-template-columns: 1fr; }
+  .stock-row { grid-template-columns: 84px minmax(0, 1fr) 76px; }
+  .stock-row .tele-bar { display: none; }
+  .donut-wrap { justify-content: center; }
   .modal { width: calc(100vw - 24px) !important; max-height: 86vh; overflow-y: auto; }
   .hud-modal { width: calc(100vw - 24px) !important; }
 
