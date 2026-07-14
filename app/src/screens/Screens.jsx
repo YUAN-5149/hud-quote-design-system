@@ -444,11 +444,13 @@ export function QuotesList({ quotes = [], onNewQuote, onOpenQuote, onSign, onCon
 // ─────────────────────────────────────────────────────────────
 // MATERIALS
 // ─────────────────────────────────────────────────────────────
-// 新增品項 — 代碼可留空自動編號
+// 品項表單（新增／編輯共用）— 代碼可留空自動編號；編輯時代碼鎖定
 const CODE_PREFIX = { '配電': 'PWR', '電線': 'WIRE', '管材': 'PIPE', '工資': 'LBR', '雜項': 'MISC' };
 
-function NewMaterialModal({ open, onClose, onAdd, materials }) {
-  const blank = { code: '', name: '', cat: '配電', unit: '個', price: '', stock: '' };
+function MaterialModal({ onClose, onSubmit, materials, editing = null }) {
+  const blank = editing
+    ? { code: editing.code, name: editing.name, cat: editing.cat, unit: editing.unit, price: String(editing.price), stock: typeof editing.stock === 'number' ? String(editing.stock) : '' }
+    : { code: '', name: '', cat: '配電', unit: '個', price: '', stock: '' };
   const [form, setForm] = useState(blank);
   const [err, setErr] = useState({});
   const isLabor = form.cat === '工資';
@@ -466,12 +468,12 @@ function NewMaterialModal({ open, onClose, onAdd, materials }) {
     const e = {};
     if (!form.name.trim()) e.name = '請輸入品名';
     if (!(+form.price > 0)) e.price = '請輸入單價';
-    const code = form.code.trim().toUpperCase() || autoCode();
-    if (materials.some(m => m.code === code)) e.code = '代碼已存在';
+    const code = editing ? editing.code : (form.code.trim().toUpperCase() || autoCode());
+    if (!editing && materials.some(m => m.code === code)) e.code = '代碼已存在';
     if (!isLabor && form.stock !== '' && +form.stock < 0) e.stock = '庫存不可為負';
     setErr(e);
     if (Object.keys(e).length) return;
-    onAdd({
+    onSubmit({
       code,
       name: form.name.trim(),
       cat: form.cat,
@@ -479,19 +481,17 @@ function NewMaterialModal({ open, onClose, onAdd, materials }) {
       price: +form.price,
       stock: isLabor ? '—' : (+form.stock || 0),
     });
-    setForm(blank);
-    setErr({});
     onClose();
   };
 
   return (
     <Modal
-      open={open} onClose={onClose}
-      title="新增品項 · NEW SKU" meta="CATALOG" width={560}
+      open onClose={onClose}
+      title={editing ? '編輯品項 · EDIT SKU' : '新增品項 · NEW SKU'} meta={editing ? editing.code : 'CATALOG'} width={560}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>取消</Button>
-          <Button variant="primary" icon="check" onClick={submit}>加入材料庫</Button>
+          <Button variant="primary" icon="check" onClick={submit}>{editing ? '儲存變更' : '加入材料庫'}</Button>
         </>
       }
     >
@@ -502,8 +502,8 @@ function NewMaterialModal({ open, onClose, onAdd, materials }) {
         <Field label="類別 · CATEGORY">
           <Select value={form.cat} onChange={pickCat} options={['配電','電線','管材','工資','雜項'].map(c => ({ value: c, label: c }))} />
         </Field>
-        <Field label="代碼 · CODE" error={err.code} helper={form.code.trim() ? '' : `留空自動編號：${autoCode()}`}>
-          <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="NFB-2P-20" className="input mono" />
+        <Field label="代碼 · CODE" error={err.code} helper={editing ? '代碼不可變更' : form.code.trim() ? '' : `留空自動編號：${autoCode()}`}>
+          <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="NFB-2P-20" className="input mono" disabled={!!editing} />
         </Field>
         <Field label="單位 · UNIT">
           <Input value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} placeholder={isLabor ? '工時' : '個'} />
@@ -512,7 +512,7 @@ function NewMaterialModal({ open, onClose, onAdd, materials }) {
           <Input type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} placeholder="450" inputMode="numeric" />
         </Field>
         {!isLabor && (
-          <Field label="期初庫存 · STOCK" error={err.stock} helper="選填，預設 0">
+          <Field label={editing ? '庫存 · STOCK' : '期初庫存 · STOCK'} error={err.stock} helper={editing ? '手動修正；日常增減請用進出貨' : '選填，預設 0'}>
             <Input type="number" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} placeholder="0" inputMode="numeric" />
           </Field>
         )}
@@ -521,10 +521,81 @@ function NewMaterialModal({ open, onClose, onAdd, materials }) {
   );
 }
 
-export function MaterialsScreen({ materials = MATERIALS, onAdd }) {
+// 進出貨 — 進貨入庫 / 領料出庫，套用後自動增減庫存
+function MovementModal({ onClose, onMove, materials, cases }) {
+  const stockItems = materials.filter(m => typeof m.stock === 'number');
+  const [type, setType] = useState('in');
+  const [code, setCode] = useState(stockItems[0]?.code || '');
+  const [qty, setQty] = useState('');
+  const [caseId, setCaseId] = useState('');
+  const [note, setNote] = useState('');
+  const [err, setErr] = useState({});
+  const item = stockItems.find(m => m.code === code);
+
+  const submit = () => {
+    const e = {};
+    if (!item) e.code = '請選擇品項';
+    if (!(+qty > 0)) e.qty = '請輸入數量';
+    if (item && type === 'out' && +qty > item.stock) e.qty = `庫存僅剩 ${item.stock} ${item.unit}`;
+    setErr(e);
+    if (Object.keys(e).length) return;
+    const caseName = cases.find(c => c.id === caseId)?.name || '';
+    onMove({
+      id: `M-${Date.now()}`,
+      date: todayISO(),
+      code: item.code, name: item.name, unit: item.unit,
+      type, qty: +qty,
+      note: [caseName, note.trim()].filter(Boolean).join(' · ') || (type === 'in' ? '進貨' : '領料'),
+    });
+    onClose();
+  };
+
+  return (
+    <Modal
+      open onClose={onClose}
+      title="進出貨 · STOCK MOVEMENT" meta={type === 'in' ? 'INBOUND' : 'OUTBOUND'} width={560}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>取消</Button>
+          <Button variant="primary" icon="check" onClick={submit}>{type === 'in' ? '登記進貨' : '登記領料'}</Button>
+        </>
+      }
+    >
+      <div className="mode-tabs">
+        <button className={`mode-tab ${type === 'in' ? 'active' : ''}`} onClick={() => setType('in')}>進貨入庫</button>
+        <button className={`mode-tab ${type === 'out' ? 'active' : ''}`} onClick={() => setType('out')}>領料出庫</button>
+      </div>
+      <div className="quote-meta-grid">
+        <Field label="品項 · SKU" error={err.code}>
+          <Select value={code} onChange={setCode} options={stockItems.map(m => ({ value: m.code, label: `${m.code} ${m.name}` }))} />
+        </Field>
+        <Field label="數量 · QTY" error={err.qty} helper={item ? `目前庫存 ${item.stock} ${item.unit}` : ''}>
+          <Input type="number" value={qty} onChange={e => setQty(e.target.value)} placeholder="0" inputMode="numeric" autoFocus />
+        </Field>
+        {type === 'out' && (
+          <Field label="用於案件 · CASE" helper="選填">
+            <Select value={caseId} onChange={setCaseId} options={[{ value: '', label: '— 不指定 —' }, ...cases.map(c => ({ value: c.id, label: `${c.id} ${c.name}` }))]} />
+          </Field>
+        )}
+        <Field label={type === 'in' ? '廠商／備註 · NOTE' : '備註 · NOTE'} helper="選填">
+          <Input value={note} onChange={e => setNote(e.target.value)} placeholder={type === 'in' ? '全成建材' : '3F 配電箱'} />
+        </Field>
+      </div>
+    </Modal>
+  );
+}
+
+export function MaterialsScreen({ materials = MATERIALS, cases = [], moves = [], onAdd, onUpdate, onDelete, onMove }) {
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('all');
   const [addOpen, setAddOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [moveOpen, setMoveOpen] = useState(false);
+
+  const removeItem = (m) => {
+    if (!confirm(`從材料庫刪除「${m.name}」(${m.code})？`)) return;
+    onDelete(m.code);
+  };
   const filtered = materials.filter(m =>
     (cat === 'all' || m.cat === cat) && (m.name.includes(q) || m.code.includes(q))
   );
@@ -551,7 +622,7 @@ export function MaterialsScreen({ materials = MATERIALS, onAdd }) {
       <div className="screen-header">
         <h1 className="screen-title">材料庫 // MATERIALS</h1>
         <div className="screen-actions">
-          <Button variant="ghost" icon="download">匯出清單</Button>
+          <Button variant="ghost" icon="arrow-left-right" onClick={() => setMoveOpen(true)}>進出貨</Button>
           <Button variant="primary" icon="plus" onClick={() => setAddOpen(true)}>新增品項</Button>
         </div>
       </div>
@@ -623,7 +694,7 @@ export function MaterialsScreen({ materials = MATERIALS, onAdd }) {
         <div className="table-scroll">
           <table className="data-table">
             <thead>
-              <tr><th>CODE</th><th>品名</th><th style={{ fontSize: 12 }}>類別</th><th style={{ fontSize: 12 }}>單位</th><th style={{ textAlign: 'right', fontSize: 12 }}>單價</th><th style={{ textAlign: 'right', fontSize: 12 }}>庫存</th><th style={{ textAlign: 'right', fontSize: 12 }}>庫存值</th></tr>
+              <tr><th>CODE</th><th>品名</th><th style={{ fontSize: 12 }}>類別</th><th style={{ fontSize: 12 }}>單位</th><th style={{ textAlign: 'right', fontSize: 12 }}>單價</th><th style={{ textAlign: 'right', fontSize: 12 }}>庫存</th><th style={{ textAlign: 'right', fontSize: 12 }}>庫存值</th><th style={{ textAlign: 'right', fontSize: 12 }}>操作</th></tr>
             </thead>
             <tbody>
               {filtered.map(m => {
@@ -642,6 +713,12 @@ export function MaterialsScreen({ materials = MATERIALS, onAdd }) {
                     <td className="mono" style={{ textAlign: 'right', color: 'var(--accent)' }}>
                       {typeof m.stock === 'number' ? fmt(m.stock * m.price) : '—'}
                     </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'inline-flex', gap: 6 }}>
+                        <button className="icon-btn" title="編輯" onClick={() => setEditing(m)}><Icon name="pencil" size={13} /></button>
+                        <button className="icon-btn" title="刪除" onClick={() => removeItem(m)}><Icon name="trash-2" size={13} /></button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -649,7 +726,36 @@ export function MaterialsScreen({ materials = MATERIALS, onAdd }) {
           </table>
         </div>
       </Panel>
-      <NewMaterialModal open={addOpen} onClose={() => setAddOpen(false)} onAdd={onAdd} materials={materials} />
+
+      <Panel title="進出貨紀錄" meta={`STOCK MOVEMENTS · ${moves.length} 筆`}>
+        <div className="table-scroll">
+          <table className="data-table">
+            <thead>
+              <tr><th>日期</th><th>品項</th><th style={{ fontSize: 12 }}>類型</th><th style={{ textAlign: 'right', fontSize: 12 }}>數量</th><th style={{ fontSize: 12 }}>案件／備註</th></tr>
+            </thead>
+            <tbody>
+              {[...moves].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 10).map(mv => (
+                <tr key={mv.id}>
+                  <td className="row-sub mono">{mv.date?.slice(5).replace('-', '/')}</td>
+                  <td><div>{mv.name}</div><div className="row-sub mono">{mv.code}</div></td>
+                  <td><Chip kind={mv.type === 'in' ? 'ok' : 'info'}>{mv.type === 'in' ? '進貨' : '領料'}</Chip></td>
+                  <td className="mono" style={{ textAlign: 'right', color: mv.type === 'in' ? 'var(--ok)' : 'var(--fg-1)' }}>
+                    {mv.type === 'in' ? '+' : '−'}{mv.qty} {mv.unit}
+                  </td>
+                  <td className="row-sub">{mv.note || '—'}</td>
+                </tr>
+              ))}
+              {moves.length === 0 && (
+                <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--fg-3)', padding: 24 }}>尚無進出貨紀錄</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+
+      {addOpen && <MaterialModal onClose={() => setAddOpen(false)} onSubmit={onAdd} materials={materials} />}
+      {editing && <MaterialModal onClose={() => setEditing(null)} onSubmit={(item) => onUpdate(editing.code, item)} materials={materials} editing={editing} />}
+      {moveOpen && <MovementModal onClose={() => setMoveOpen(false)} onMove={onMove} materials={materials} cases={cases} />}
     </div>
   );
 }

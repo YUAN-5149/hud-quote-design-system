@@ -6,7 +6,7 @@ import { BillingScreen } from './screens/Billing.jsx';
 import { LoginScreen, WhitelistScreen } from './auth/Auth.jsx';
 import { loadSession, saveSession } from './lib/session.js';
 import { usePersistedState } from './lib/store.js';
-import { CASES_SEED, INVOICES_SEED, QUOTES_SEED, MATERIALS } from './lib/data.js';
+import { CASES_SEED, INVOICES_SEED, QUOTES_SEED, MATERIALS, MOVES_SEED } from './lib/data.js';
 import { todayISO } from './lib/format.js';
 
 const LABELS = {
@@ -28,7 +28,21 @@ export default function App() {
   const [invoices, setInvoices] = usePersistedState('hud_invoices_v2', INVOICES_SEED);
   const [quotes, setQuotes] = usePersistedState('hud_quotes_v1', QUOTES_SEED);
   const [materials, setMaterials] = usePersistedState('hud_materials_v1', MATERIALS);
+  const [moves, setMoves] = usePersistedState('hud_stock_moves_v1', MOVES_SEED);
   const [selectedQuote, setSelectedQuote] = useState(null);
+
+  // 材料庫：編輯（以原代碼定位）、刪除、進出貨（異動紀錄 + 庫存增減）
+  const updateMaterial = (code, item) =>
+    setMaterials(prev => prev.map(m => (m.code === code ? item : m)));
+  const deleteMaterial = (code) =>
+    setMaterials(prev => prev.filter(m => m.code !== code));
+  const addMovement = (mv) => {
+    setMoves(prev => [mv, ...prev]);
+    setMaterials(prev => prev.map(m =>
+      m.code === mv.code && typeof m.stock === 'number'
+        ? { ...m, stock: Math.max(0, m.stock + (mv.type === 'in' ? mv.qty : -mv.qty)) }
+        : m));
+  };
   const [newCaseOpen, setNewCaseOpen] = useState(false);
 
   useEffect(() => { localStorage.setItem('scr', screen); }, [screen]);
@@ -93,7 +107,7 @@ export default function App() {
       case 'cases': return <CaseList cases={cases} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} />;
       case 'quote': return <QuoteBuilder key={selectedQuote?.id || selectedCase?.id || 'new'} caseData={selectedCase} quote={selectedQuote} materials={materials} onClose={() => setScreen('quotes')} onSave={saveQuote} />;
       case 'quotes': return <QuotesList quotes={quotes} onNewQuote={openNewQuote} onOpenQuote={openQuoteDoc} onSign={signQuote} onConvert={convertQuote} />;
-      case 'materials': return <MaterialsScreen materials={materials} onAdd={(m) => setMaterials(prev => [m, ...prev])} />;
+      case 'materials': return <MaterialsScreen materials={materials} cases={cases} moves={moves} onAdd={(m) => setMaterials(prev => [m, ...prev])} onUpdate={updateMaterial} onDelete={deleteMaterial} onMove={addMovement} />;
       case 'billing': return <BillingScreen cases={cases} invoices={invoices} setInvoices={setInvoices} />;
       case 'reports': return <ReportsScreen cases={cases} invoices={invoices} />;
       case 'whitelist': return <WhitelistScreen session={session} onLogout={logout} />;

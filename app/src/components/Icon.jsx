@@ -1,5 +1,5 @@
 import {
-  Activity, Check, Download, FilePlus, FileText, FolderKanban, KeyRound,
+  Activity, ArrowLeftRight, Check, Download, FilePlus, FileText, FolderKanban, KeyRound,
   LayoutGrid, Loader, LogIn, LogOut, Package, Pencil, Plus, Printer,
   Receipt, Save, Search, Send, Settings, ShieldAlert, ShieldCheck,
   Smartphone, Trash2, User, UserPlus, X,
@@ -9,6 +9,7 @@ import {
 // 只匯入有用到的圖示以維持 bundle 精簡；新增圖示時記得補進 MAP
 const MAP = {
   'activity': Activity,
+  'arrow-left-right': ArrowLeftRight,
   'check': Check,
   'download': Download,
   'file-plus': FilePlus,

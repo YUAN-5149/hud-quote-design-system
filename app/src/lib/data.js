@@ -46,6 +46,22 @@ export const MATERIALS = [
   { code: 'LBR-PLB',    name: '給排水配管施工',          cat: '工資', unit: '工時', price: 1100, stock: '—' },
 ];
 
+// 進出貨紀錄種子 — type: 'in' 進貨 / 'out' 領料
+const daysAgo = (n) => {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return isoOf(d);
+};
+
+export const MOVES_SEED = [
+  { id: 'M-6', date: daysAgo(1),  code: 'WIRE-5-5',   name: '電線 5.5 平方 × 100m',   unit: '捲', type: 'out', qty: 2,  note: '大明商辦 3F 配電工程' },
+  { id: 'M-5', date: daysAgo(2),  code: 'NFB-3P-100', name: '無熔絲開關 NFB 3P 100A', unit: '個', type: 'out', qty: 2,  note: '文心飯店地下機房配管' },
+  { id: 'M-4', date: daysAgo(4),  code: 'PVC-1-4M',   name: 'PVC 電管 1" × 4m',        unit: '支', type: 'in',  qty: 60, note: '全成建材 · 進貨' },
+  { id: 'M-3', date: daysAgo(6),  code: 'PVC-3-4-4M', name: 'PVC 電管 3/4" × 4m',      unit: '支', type: 'out', qty: 24, note: '林口集合住宅熱水管線' },
+  { id: 'M-2', date: daysAgo(9),  code: 'NFB-2P-30',  name: '無熔絲開關 NFB 2P 30A',  unit: '個', type: 'in',  qty: 20, note: '大井電料行 · 進貨' },
+  { id: 'M-1', date: daysAgo(12), code: 'PIPE-CU-15', name: '銅管 15A × 3m',           unit: '支', type: 'out', qty: 8,  note: '天母住宅浴室翻新' },
+];
+
 // 材料分類（不含工資）— 儀表板與篩選共用；顏色為同色系深淺，符合 HUD 用色節制原則
 export const MATERIAL_CATS = [
   { name: '配電', color: 'rgba(0, 229, 255, 0.95)' },
