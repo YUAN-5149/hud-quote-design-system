@@ -1,6 +1,7 @@
 // Firebase 初始化 — Firestore 即時同步後端
 // Web API key 屬公開識別資訊（非機密），存取控制由 Firestore 安全規則負責
 import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
 } from 'firebase/firestore';
@@ -15,8 +16,10 @@ const firebaseConfig = {
 };
 
 let db = null;
+let auth = null;
 try {
   const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
   // 離線快取：斷網時仍可讀寫，恢復連線自動同步
   db = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
@@ -25,4 +28,4 @@ try {
   console.warn('Firebase 初始化失敗，退回本機模式', e);
 }
 
-export { db };
+export { db, auth };

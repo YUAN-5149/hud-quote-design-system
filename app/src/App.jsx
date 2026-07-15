@@ -4,7 +4,9 @@ import { Dashboard, CaseList, QuotesList, MaterialsScreen, ReportsScreen, NewCas
 import { QuoteBuilder } from './screens/QuoteBuilder.jsx';
 import { BillingScreen } from './screens/Billing.jsx';
 import { LoginScreen, WhitelistScreen } from './auth/Auth.jsx';
-import { loadSession, saveSession, WL_SEED } from './lib/session.js';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './lib/firebase.js';
+import { loadSession, saveSession, logoutAuth, WL_SEED } from './lib/session.js';
 import { useSyncedCollection } from './lib/store.js';
 import { CASES_SEED, INVOICES_SEED, QUOTES_SEED, MATERIALS, MOVES_SEED } from './lib/data.js';
 import { todayISO } from './lib/format.js';
@@ -24,13 +26,27 @@ export default function App() {
   const [session, setSession] = useState(() => loadSession());
   const [screen, setScreen] = useState(() => localStorage.getItem('scr') || 'dashboard');
   const [selectedCase, setSelectedCase] = useState(null);
+  // Firebase Auth 狀態 — 資料同步僅在登入後啟動（安全規則要求）
+  const [authed, setAuthed] = useState(false);
+  useEffect(() => {
+    if (!auth) { setAuthed(true); return undefined; } // 無 Firebase：本機模式
+    return onAuthStateChanged(auth, (user) => {
+      setAuthed(!!user);
+      // Firebase 憑證失效但本機還留著 session → 強制回登入頁
+      if (!user && loadSession()) {
+        saveSession(null);
+        setSession(null);
+      }
+    });
+  }, []);
+
   // Firestore 即時同步集合（多裝置共用；離線時用本機快取）
-  const [cases, setCases] = useSyncedCollection('cases', CASES_SEED, 'id');
-  const [invoices, setInvoices] = useSyncedCollection('invoices', INVOICES_SEED, 'id');
-  const [quotes, setQuotes] = useSyncedCollection('quotes', QUOTES_SEED, 'id');
-  const [materials, setMaterials] = useSyncedCollection('materials', MATERIALS, 'code');
-  const [moves, setMoves] = useSyncedCollection('moves', MOVES_SEED, 'id');
-  const [whitelist, setWhitelist] = useSyncedCollection('whitelist', WL_SEED, 'phone');
+  const [cases, setCases] = useSyncedCollection('cases', CASES_SEED, 'id', authed);
+  const [invoices, setInvoices] = useSyncedCollection('invoices', INVOICES_SEED, 'id', authed);
+  const [quotes, setQuotes] = useSyncedCollection('quotes', QUOTES_SEED, 'id', authed);
+  const [materials, setMaterials] = useSyncedCollection('materials', MATERIALS, 'code', authed);
+  const [moves, setMoves] = useSyncedCollection('moves', MOVES_SEED, 'id', authed);
+  const [whitelist, setWhitelist] = useSyncedCollection('whitelist', WL_SEED, 'phone', authed);
   const [selectedQuote, setSelectedQuote] = useState(null);
 
   // 材料庫：編輯（以原代碼定位）、刪除、進出貨（異動紀錄 + 庫存增減）
@@ -50,7 +66,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem('scr', screen); }, [screen]);
 
   const handleAuth = (s) => { saveSession(s); setSession(s); setScreen('dashboard'); };
-  const logout = () => { saveSession(null); setSession(null); };
+  const logout = () => { logoutAuth(); saveSession(null); setSession(null); };
 
   if (!session) return <LoginScreen onAuth={handleAuth} />;
 

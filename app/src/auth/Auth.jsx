@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Panel, Metric, Chip, Field, Input, Select, Icon } from '../components/Primitives.jsx';
-import { ADMIN_PASS, fetchWhitelist } from '../lib/session.js';
+import { loginWithPhone } from '../lib/session.js';
 
 // ─────────────────────────────────────────────────────────────
 // Login Screen — full-viewport HUD console
@@ -22,34 +22,14 @@ export function LoginScreen({ onAuth }) {
     setBusy(true);
     setStage('verifying');
 
-    const wl = await fetchWhitelist();
-    const found = wl.find(w => w.phone === phone.trim());
-
-    // admin master pass
-    if (pass === ADMIN_PASS) {
-      const session = {
-        phone: phone.trim(),
-        name: found ? found.name : '系統管理員',
-        role: found ? found.role : 'ADMIN',
-        isAdmin: true,
-        loginAt: new Date().toISOString(),
-      };
+    const result = await loginWithPhone(phone.trim(), pass);
+    if (result.session) {
       setStage('granted');
-      setTimeout(() => onAuth(session), 700);
-      return;
-    }
-    // whitelisted users — pass 為完整號碼或末四碼
-    if (found && (pass === found.phone || pass === found.phone.slice(-4))) {
-      const session = {
-        phone: found.phone, name: found.name, role: found.role,
-        isAdmin: false, loginAt: new Date().toISOString(),
-      };
-      setStage('granted');
-      setTimeout(() => onAuth(session), 700);
+      setTimeout(() => onAuth(result.session), 700);
       return;
     }
     setStage('denied');
-    setErr(found ? '通行碼錯誤 // ACCESS DENIED' : '此號碼未在白名單 // NOT WHITELISTED');
+    setErr(result.error);
     setBusy(false);
     setTimeout(() => setStage('idle'), 1400);
   };
@@ -161,7 +141,7 @@ export function LoginScreen({ onAuth }) {
 
             <div className="login-hint">
               <span className="mono-label">DEMO</span>
-              <span>測試帳號：手機 0912345678 · 通行碼 5678（末四碼）。管理員模式：任一手機號 + 通行碼 hud-admin-2026。</span>
+              <span>測試帳號：0912345678 · 通行碼 0912345678（首次登入自動開通）。管理員：0911111111 · 通行碼 0911111111。</span>
             </div>
           </form>
         </section>

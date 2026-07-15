@@ -1,11 +1,30 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Demo 模式：僅開放 App 使用的六個集合，其餘一律拒絕。
-    // 注意：目前為公開讀寫（Demo 資料）。正式上線前應改接 Firebase Auth
-    // 並依白名單角色限制寫入。
+    // 從登入者的內部帳號 (<phone>@hud-quote.app) 取出手機號
+    function callerPhone() {
+      return request.auth.token.email.split('@')[0];
+    }
+    // 必須已登入且仍在白名單內 — 從白名單移除即失去所有存取權
+    function isMember() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/whitelist/$(callerPhone()));
+    }
+    function isAdmin() {
+      return isMember()
+        && get(/databases/$(database)/documents/whitelist/$(callerPhone())).data.role == '管理';
+    }
+
+    // 白名單：讀取開放（登入前需查詢名單）；寫入僅限管理員
+    match /whitelist/{phone} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 業務資料：白名單成員可讀寫
     match /{col}/{docId} {
-      allow read, write: if col in ['cases', 'invoices', 'quotes', 'materials', 'moves', 'whitelist'];
+      allow read, write: if col in ['cases', 'invoices', 'quotes', 'materials', 'moves']
+        && isMember();
     }
   }
 }

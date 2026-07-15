@@ -27,7 +27,7 @@ export function usePersistedState(key, seed) {
 // - _ord 欄位維持「新的在前」排序
 // - Firestore 不可用時退回 localStorage 快取
 // ─────────────────────────────────────────────────────────────
-export function useSyncedCollection(name, seed, keyField) {
+export function useSyncedCollection(name, seed, keyField, enabled = true) {
   const cacheKey = `hud_cache_${name}`;
   const [value, setValue] = useState(() => {
     try {
@@ -39,7 +39,7 @@ export function useSyncedCollection(name, seed, keyField) {
   const ready = useRef(false);
 
   useEffect(() => {
-    if (!db) return undefined;
+    if (!db || !enabled) return undefined;
     const col = collection(db, name);
     let unsub;
     let cancelled = false;
@@ -64,9 +64,9 @@ export function useSyncedCollection(name, seed, keyField) {
         console.warn(`Firestore 同步失敗 (${name})，使用本機資料`, e);
       }
     })();
-    return () => { cancelled = true; unsub && unsub(); };
+    return () => { cancelled = true; ready.current = false; unsub && unsub(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name]);
+  }, [name, enabled]);
 
   const update = (updater) => {
     setValue(prev => {
