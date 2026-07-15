@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Demo 模式：僅開放 App 使用的六個集合，其餘一律拒絕。
+    // 注意：目前為公開讀寫（Demo 資料）。正式上線前應改接 Firebase Auth
+    // 並依白名單角色限制寫入。
+    match /{col}/{docId} {
+      allow read, write: if col in ['cases', 'invoices', 'quotes', 'materials', 'moves', 'whitelist'];
+    }
+  }
+}

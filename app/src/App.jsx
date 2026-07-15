@@ -4,8 +4,8 @@ import { Dashboard, CaseList, QuotesList, MaterialsScreen, ReportsScreen, NewCas
 import { QuoteBuilder } from './screens/QuoteBuilder.jsx';
 import { BillingScreen } from './screens/Billing.jsx';
 import { LoginScreen, WhitelistScreen } from './auth/Auth.jsx';
-import { loadSession, saveSession } from './lib/session.js';
-import { usePersistedState } from './lib/store.js';
+import { loadSession, saveSession, WL_SEED } from './lib/session.js';
+import { useSyncedCollection } from './lib/store.js';
 import { CASES_SEED, INVOICES_SEED, QUOTES_SEED, MATERIALS, MOVES_SEED } from './lib/data.js';
 import { todayISO } from './lib/format.js';
 
@@ -24,11 +24,13 @@ export default function App() {
   const [session, setSession] = useState(() => loadSession());
   const [screen, setScreen] = useState(() => localStorage.getItem('scr') || 'dashboard');
   const [selectedCase, setSelectedCase] = useState(null);
-  const [cases, setCases] = usePersistedState('hud_cases_v2', CASES_SEED);
-  const [invoices, setInvoices] = usePersistedState('hud_invoices_v2', INVOICES_SEED);
-  const [quotes, setQuotes] = usePersistedState('hud_quotes_v1', QUOTES_SEED);
-  const [materials, setMaterials] = usePersistedState('hud_materials_v1', MATERIALS);
-  const [moves, setMoves] = usePersistedState('hud_stock_moves_v1', MOVES_SEED);
+  // Firestore 即時同步集合（多裝置共用；離線時用本機快取）
+  const [cases, setCases] = useSyncedCollection('cases', CASES_SEED, 'id');
+  const [invoices, setInvoices] = useSyncedCollection('invoices', INVOICES_SEED, 'id');
+  const [quotes, setQuotes] = useSyncedCollection('quotes', QUOTES_SEED, 'id');
+  const [materials, setMaterials] = useSyncedCollection('materials', MATERIALS, 'code');
+  const [moves, setMoves] = useSyncedCollection('moves', MOVES_SEED, 'id');
+  const [whitelist, setWhitelist] = useSyncedCollection('whitelist', WL_SEED, 'phone');
   const [selectedQuote, setSelectedQuote] = useState(null);
 
   // 材料庫：編輯（以原代碼定位）、刪除、進出貨（異動紀錄 + 庫存增減）
@@ -54,7 +56,13 @@ export default function App() {
 
   const openCase = (c) => { setSelectedCase(c); setSelectedQuote(null); setScreen('quote'); };
   const openNewQuote = () => { setSelectedCase(null); setSelectedQuote(null); setScreen('quote'); };
-  const createCase = (c) => setCases(prev => [c, ...prev]);
+  // 同日建立多筆案件時，流水後綴避免撞號
+  const createCase = (c) => setCases(prev => {
+    let id = c.id;
+    let n = 2;
+    while (prev.some(x => x.id === id)) id = `${c.id}-${n++}`;
+    return [{ ...c, id }, ...prev];
+  });
 
   // 從報價單列表開啟：帶入該報價單與其案件
   const openQuoteDoc = (q) => {
@@ -110,7 +118,7 @@ export default function App() {
       case 'materials': return <MaterialsScreen materials={materials} cases={cases} moves={moves} onAdd={(m) => setMaterials(prev => [m, ...prev])} onUpdate={updateMaterial} onDelete={deleteMaterial} onMove={addMovement} />;
       case 'billing': return <BillingScreen cases={cases} invoices={invoices} setInvoices={setInvoices} />;
       case 'reports': return <ReportsScreen cases={cases} invoices={invoices} />;
-      case 'whitelist': return <WhitelistScreen session={session} onLogout={logout} />;
+      case 'whitelist': return <WhitelistScreen session={session} onLogout={logout} list={whitelist} setList={setWhitelist} />;
       default: return null;
     }
   };

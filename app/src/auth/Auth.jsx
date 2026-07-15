@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Panel, Metric, Chip, Field, Input, Select, Icon } from '../components/Primitives.jsx';
-import { ADMIN_PASS, loadWhitelist, saveWhitelist } from '../lib/session.js';
+import { ADMIN_PASS, fetchWhitelist } from '../lib/session.js';
 
 // ─────────────────────────────────────────────────────────────
 // Login Screen — full-viewport HUD console
@@ -12,7 +12,7 @@ export function LoginScreen({ onAuth }) {
   const [busy, setBusy] = useState(false);
   const [stage, setStage] = useState('idle'); // idle | verifying | granted | denied
 
-  const tryLogin = (e) => {
+  const tryLogin = async (e) => {
     e && e.preventDefault();
     setErr('');
     if (!phone.trim() || !pass.trim()) {
@@ -22,40 +22,36 @@ export function LoginScreen({ onAuth }) {
     setBusy(true);
     setStage('verifying');
 
-    // simulate handshake
-    setTimeout(() => {
-      // admin master pass
-      if (pass === ADMIN_PASS) {
-        const wl = loadWhitelist();
-        const found = wl.find(w => w.phone === phone.trim());
-        const session = {
-          phone: phone.trim(),
-          name: found ? found.name : '系統管理員',
-          role: found ? found.role : 'ADMIN',
-          isAdmin: true,
-          loginAt: new Date().toISOString(),
-        };
-        setStage('granted');
-        setTimeout(() => onAuth(session), 700);
-        return;
-      }
-      // whitelisted users — pass 為完整號碼或末四碼
-      const wl = loadWhitelist();
-      const found = wl.find(w => w.phone === phone.trim());
-      if (found && (pass === found.phone || pass === found.phone.slice(-4))) {
-        const session = {
-          phone: found.phone, name: found.name, role: found.role,
-          isAdmin: false, loginAt: new Date().toISOString(),
-        };
-        setStage('granted');
-        setTimeout(() => onAuth(session), 700);
-        return;
-      }
-      setStage('denied');
-      setErr(found ? '通行碼錯誤 // ACCESS DENIED' : '此號碼未在白名單 // NOT WHITELISTED');
-      setBusy(false);
-      setTimeout(() => setStage('idle'), 1400);
-    }, 600);
+    const wl = await fetchWhitelist();
+    const found = wl.find(w => w.phone === phone.trim());
+
+    // admin master pass
+    if (pass === ADMIN_PASS) {
+      const session = {
+        phone: phone.trim(),
+        name: found ? found.name : '系統管理員',
+        role: found ? found.role : 'ADMIN',
+        isAdmin: true,
+        loginAt: new Date().toISOString(),
+      };
+      setStage('granted');
+      setTimeout(() => onAuth(session), 700);
+      return;
+    }
+    // whitelisted users — pass 為完整號碼或末四碼
+    if (found && (pass === found.phone || pass === found.phone.slice(-4))) {
+      const session = {
+        phone: found.phone, name: found.name, role: found.role,
+        isAdmin: false, loginAt: new Date().toISOString(),
+      };
+      setStage('granted');
+      setTimeout(() => onAuth(session), 700);
+      return;
+    }
+    setStage('denied');
+    setErr(found ? '通行碼錯誤 // ACCESS DENIED' : '此號碼未在白名單 // NOT WHITELISTED');
+    setBusy(false);
+    setTimeout(() => setStage('idle'), 1400);
   };
 
   return (
@@ -183,14 +179,11 @@ export function LoginScreen({ onAuth }) {
 // ─────────────────────────────────────────────────────────────
 // Whitelist Screen — manage allowed phone numbers
 // ─────────────────────────────────────────────────────────────
-export function WhitelistScreen({ session, onLogout }) {
-  const [list, setList] = useState(() => loadWhitelist());
+export function WhitelistScreen({ session, onLogout, list, setList }) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ phone: '', name: '', role: '工班', note: '' });
-
-  useEffect(() => { saveWhitelist(list); }, [list]);
 
   const filtered = list.filter(w =>
     !q || w.phone.includes(q) || (w.name||'').includes(q) || (w.role||'').includes(q)
