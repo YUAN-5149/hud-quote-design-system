@@ -1,0 +1,9 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- PWA 圖示原稿：深色底 + 品牌六角水滴閃電 -->
+  <rect width="512" height="512" rx="96" fill="#060C16"/>
+  <g transform="translate(96, 96) scale(5)" fill="none" stroke="#00E5FF" stroke-width="2">
+    <path d="M32 3 L57 17 L57 47 L32 61 L7 47 L7 17 Z"/>
+    <path d="M32 20 C32 20, 26 28, 26 34 C26 38.5 28.7 41 32 41 C35.3 41 38 38.5 38 34 C38 28 32 20 32 20 Z" fill="rgba(0,229,255,0.12)"/>
+    <path d="M32 28 L30 33 L33 33 L31 38" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
