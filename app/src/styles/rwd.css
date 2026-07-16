@@ -158,9 +158,14 @@
 
 /* ── 手機 ≤ 768px：rail 轉為底部導航 ────────────────────── */
 @media (max-width: 768px) {
+  /* 視窗高度固定、只讓內容區捲動，導航列與頂部列永遠可見
+     （原本 min-height 讓容器隨內容長高，1fr 被撐開、導航列被推到文件底端） */
   .app {
+    height: 100vh;   /* 後備 */
+    height: 100dvh;  /* 動態視窗高：行動瀏覽器網址列伸縮時仍正確 */
+    overflow: hidden;
     grid-template-columns: 1fr;
-    grid-template-rows: 48px 1fr 56px;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas: 'topbar' 'main' 'rail';
   }
 
@@ -168,8 +173,11 @@
     grid-area: rail;
     flex-direction: row;
     width: auto;
-    height: 56px;
+    min-height: 56px;
+    height: auto;
     padding: 0 4px;
+    /* viewport-fit=cover 讓內容延伸到安全區，需補上避免被 iPhone home indicator 蓋住 */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     border-right: none;
     border-top: 1px solid var(--line-base);
     overflow-x: auto;
@@ -196,7 +204,14 @@
   .rail-btn-settings { display: none; }
   .rail > div[style] { display: none; } /* flex spacer */
 
-  .topbar { grid-area: topbar; padding: 0 12px; height: 48px; gap: 8px; }
+  .topbar {
+    grid-area: topbar;
+    padding: 0 12px;
+    padding-top: env(safe-area-inset-top, 0px); /* PWA 全螢幕時避開狀態列 */
+    min-height: 48px;
+    height: auto;
+    gap: 8px;
+  }
   .tb-hide-sm { display: none !important; }
   .breadcrumb { flex: 1 1 auto; min-width: 0; }
   .breadcrumb .mono-label:first-child { display: none; }
@@ -204,7 +219,14 @@
   .bc-current { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .topbar-status { flex: 0 0 auto; }
 
-  .main { grid-area: main; padding: 14px 12px 20px; }
+  .main {
+    grid-area: main;
+    padding: 14px 12px 20px;
+    min-height: 0; /* 允許在 grid 中收縮，overflow 才會生效 */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain; /* 捲到底時不牽動外層 */
+  }
   .statusbar { display: none; }
 
   .screen-header {
