@@ -1,5 +1,5 @@
 /* ── 共用補充 ─────────────────────────────────────────────── */
-.table-scroll { overflow-x: auto; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table-scroll .data-table { min-width: 560px; }
 
 .calc-upper {
@@ -105,26 +105,31 @@
     background: #060C16;
   }
   .rail-logo { display: none; }
+  /* 全部項目平均分配寬度，7 個 section + 登出都塞得下，不需橫捲 */
   .rail-btn {
-    flex: 1 0 auto;
-    min-width: 56px;
+    flex: 1 1 0;
+    min-width: 0;
     height: 48px;
     flex-direction: column;
     gap: 2px;
-    padding: 4px 6px;
+    padding: 4px 2px;
   }
   .rail-btn-lbl {
     display: block;
-    font-size: 10px;
+    font-size: 9px;
     letter-spacing: 0;
+    white-space: nowrap;
   }
   .rail-btn-settings { display: none; }
   .rail > div[style] { display: none; } /* flex spacer */
 
-  .topbar { grid-area: topbar; padding: 0 12px; height: 48px; }
+  .topbar { grid-area: topbar; padding: 0 12px; height: 48px; gap: 8px; }
   .tb-hide-sm { display: none !important; }
+  .breadcrumb { flex: 1 1 auto; min-width: 0; }
   .breadcrumb .mono-label:first-child { display: none; }
   .breadcrumb .bc-sep { display: none; }
+  .bc-current { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-status { flex: 0 0 auto; }
 
   .main { grid-area: main; padding: 14px 12px 20px; }
   .statusbar { display: none; }
@@ -152,6 +157,18 @@
   .donut-wrap { justify-content: center; }
   .modal { width: calc(100vw - 24px) !important; max-height: 86vh; overflow-y: auto; }
   .hud-modal { width: calc(100vw - 24px) !important; }
+
+  /* 寬資料表：cell 不換行，自然撐寬靠橫捲，避免中文被壓成直排 */
+  .table-scroll .data-table { min-width: 100%; width: max-content; }
+  .table-scroll .data-table th,
+  .table-scroll .data-table td { white-space: nowrap; }
+
+  /* 材料工具列：搜尋框與分類頁籤改上下堆疊 */
+  .materials-toolbar { flex-direction: column; align-items: stretch; }
+  .materials-toolbar .cat-tabs { overflow-x: auto; }
+
+  /* 報表「案件狀態分析」用了行內 repeat(4,1fr)，手機強制 2 欄 */
+  .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 
   /* 登入頁 */
   .login-shell { width: calc(100vw - 32px); }
