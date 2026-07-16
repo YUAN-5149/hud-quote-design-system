@@ -4,6 +4,34 @@
 
 .wl-session-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
+/* ── 設定頁 ───────────────────────────────────────────────── */
+.settings-preview {
+  background: #fff;
+  color: #111;
+  padding: 18px 20px;
+  border-left: 2px solid var(--accent);
+  font-family: var(--font-tc);
+}
+.settings-preview-name { font-size: 18px; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 4px; }
+.settings-preview-meta { font-size: 11px; color: #444; line-height: 1.7; }
+.settings-preview-bank {
+  font-size: 11px;
+  color: #333;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #ccc;
+}
+.about-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 12px;
+  align-items: center;
+  font-family: var(--font-tc);
+  font-size: 13px;
+  color: var(--fg-1);
+}
+.about-lbl { color: var(--fg-3); font-size: 12px; }
+
 /* ── 報價版本列 ───────────────────────────────────────────── */
 .version-bar {
   display: flex;

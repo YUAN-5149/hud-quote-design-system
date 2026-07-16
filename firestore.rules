@@ -21,6 +21,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // 公司設定：成員可讀（報價單抬頭），僅管理員可改
+    match /settings/{docId} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
     // 業務資料：白名單成員可讀寫
     match /{col}/{docId} {
       allow read, write: if col in ['cases', 'invoices', 'quotes', 'materials', 'moves']

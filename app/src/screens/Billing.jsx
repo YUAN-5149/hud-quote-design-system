@@ -59,7 +59,7 @@ function NewInvoiceModal({ open, onClose, onCreate, cases }) {
   );
 }
 
-export function BillingScreen({ cases, invoices, setInvoices }) {
+export function BillingScreen({ cases, invoices, setInvoices, onDelete }) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
 
@@ -134,13 +134,20 @@ export function BillingScreen({ cases, invoices, setInvoices }) {
                   <td><Chip kind={v.status}>{v.statusLabel}</Chip></td>
                   <td className="mono" style={{ textAlign: 'right' }}>{fmt(v.amount)}</td>
                   <td style={{ textAlign: 'right' }}>
-                    {v.status !== 'ok' ? (
-                      <button className="btn btn-solid btn-sm" onClick={() => markPaid(v.id)}>
-                        <Icon name="check" size={12} /><span>登記收款</span>
-                      </button>
-                    ) : (
-                      <span className="mono-label" style={{ color: 'var(--ok)' }}>SETTLED</span>
-                    )}
+                    <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                      {v.status !== 'ok' ? (
+                        <>
+                          <button className="btn btn-solid btn-sm" onClick={() => markPaid(v.id)}>
+                            <Icon name="check" size={12} /><span>登記收款</span>
+                          </button>
+                          <button className="icon-btn" title="刪除請款單" onClick={() => onDelete(v)}>
+                            <Icon name="trash-2" size={13} />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="mono-label" style={{ color: 'var(--ok)' }}>SETTLED</span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

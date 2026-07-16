@@ -2,21 +2,21 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Panel, Chip, Button, Field, Input, Toggle, Icon } from '../components/Primitives.jsx';
 import { AddLineItemModal } from './Screens.jsx';
-import { LINE_ITEMS_INIT, COMPANY } from '../lib/data.js';
+import { LINE_ITEMS_INIT } from '../lib/data.js';
 import { fmt, fmtMD, toChineseUpper, validateGUI, todayYMD, todayISO, addDays, roadName } from '../lib/format.js';
 
 // ─────────────────────────────────────────────────────────────
 // 列印版報價單 — 白底正式文件（@media print 才顯示，見 print.css）
 // ─────────────────────────────────────────────────────────────
-function PrintQuote({ info, items, subtotal, tax, total, taxInc }) {
+function PrintQuote({ info, items, subtotal, tax, total, taxInc, company }) {
   return createPortal(
     <div className="print-quote">
       <header className="pq-head">
         <div>
-          <h1>{COMPANY.name}</h1>
+          <h1>{company.name || '（未設定工程行名稱）'}</h1>
           <div className="pq-co-meta">
-            統一編號 {COMPANY.gui} · 電話 {COMPANY.phone}<br />
-            {COMPANY.address}
+            統一編號 {company.gui || '—'} · 電話 {company.phone || '—'}<br />
+            {company.address || '—'}
           </div>
         </div>
         <div className="pq-doc">
@@ -74,7 +74,7 @@ function PrintQuote({ info, items, subtotal, tax, total, taxInc }) {
 
       <ol className="pq-notes">
         <li>本報價單有效期限為報價日起 30 日，逾期請重新確認。</li>
-        <li>付款方式：簽約訂金 50%，完工驗收後付清尾款。匯款帳戶：{COMPANY.bank}。</li>
+        <li>付款方式：簽約訂金 50%，完工驗收後付清尾款。匯款帳戶：{company.bank || '—'}。</li>
         <li>施工範圍以本報價單工項為準，追加工程另行報價。</li>
         <li>本報價含營業稅，如需開立統一發票請提供統編。</li>
       </ol>
@@ -92,7 +92,7 @@ function PrintQuote({ info, items, subtotal, tax, total, taxInc }) {
 // ─────────────────────────────────────────────────────────────
 // QUOTE BUILDER
 // ─────────────────────────────────────────────────────────────
-export function QuoteBuilder({ caseData, quote, versions = [], materials, newQuoteNo, onClose, onSave, onOpenVersion, onNewVersion }) {
+export function QuoteBuilder({ caseData, quote, versions = [], materials, company = {}, newQuoteNo, onClose, onSave, onOpenVersion, onNewVersion }) {
   // 只有草稿可編輯；已送出／已簽回的版本唯讀，要修改請建立新版本
   const readOnly = !!quote && quote.status !== 'info';
   // 案件名稱只在第一版（新報價／v1）可命名；後續版本沿用同一案件名稱
@@ -302,7 +302,7 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, newQuo
       </div>
 
       <AddLineItemModal open={addOpen} onClose={() => setAddOpen(false)} onAdd={addItem} materials={materials} />
-      <PrintQuote info={info} items={items} subtotal={subtotal} tax={tax} total={total} taxInc={taxInc} />
+      <PrintQuote info={info} items={items} subtotal={subtotal} tax={tax} total={total} taxInc={taxInc} company={company} />
     </div>
   );
 }

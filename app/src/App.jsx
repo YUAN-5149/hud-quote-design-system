@@ -8,7 +8,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './lib/firebase.js';
 import { loadSession, saveSession, logoutAuth, WL_SEED } from './lib/session.js';
 import { useSyncedCollection } from './lib/store.js';
-import { CASES_SEED, INVOICES_SEED, QUOTES_SEED, MATERIALS, MOVES_SEED } from './lib/data.js';
+import { CASES_SEED, INVOICES_SEED, QUOTES_SEED, MATERIALS, MOVES_SEED, COMPANY_SEED } from './lib/data.js';
+import { SettingsScreen } from './screens/Settings.jsx';
 import { todayISO, addDays, nextQuoteNo } from './lib/format.js';
 
 const LABELS = {
@@ -20,6 +21,7 @@ const LABELS = {
   billing: 'BILLING · 請款',
   reports: 'REPORTS · 報表',
   whitelist: 'WHITELIST · 白名單',
+  settings: 'SETTINGS · 設定',
 };
 
 export default function App() {
@@ -47,7 +49,12 @@ export default function App() {
   const [materials, setMaterials] = useSyncedCollection('materials', MATERIALS, 'code', authed);
   const [moves, setMoves] = useSyncedCollection('moves', MOVES_SEED, 'id', authed);
   const [whitelist, setWhitelist] = useSyncedCollection('whitelist', WL_SEED, 'phone', authed);
+  const [settings, setSettings] = useSyncedCollection('settings', COMPANY_SEED, 'id', authed);
   const [selectedQuote, setSelectedQuote] = useState(null);
+
+  // 報價單抬頭（單筆設定文件）
+  const company = settings[0] || COMPANY_SEED[0];
+  const saveCompany = (c) => setSettings([{ ...c, id: 'company' }]);
 
   // 材料庫：編輯（以原代碼定位）、刪除、進出貨（異動紀錄 + 庫存增減）
   const updateMaterial = (code, item) =>
@@ -101,6 +108,12 @@ export default function App() {
   // 尚未歸屬案件的新報價：以報價上輸入的案件名稱順帶建立案件
   const saveQuote = (record, goToList) => {
     let rec = record;
+    // 新單存檔時才確定編號：別的裝置若已用掉這個號，改取下一個，避免覆蓋對方的單
+    // （非分散式鎖，僅收斂到「同時按下存檔」的極短視窗）
+    if (!selectedQuote && quotes.some(q => q.id === rec.id)) {
+      const id = nextQuoteNo(quotes);
+      rec = { ...rec, id, info: rec.info ? { ...rec.info, quoteNo: id } : rec.info };
+    }
     if (!rec.caseId) {
       const now = new Date();
       const c = {
@@ -152,11 +165,77 @@ export default function App() {
     setScreen('quote');
   };
 
-  // 業主簽回
+  // 刪除報價單：已請款的不給刪（請款單會失去來源）
+  const deleteQuote = (q) => {
+    if (q.invoicedCount > 0) return alert(`${q.id} 已開立 ${q.invoicedCount} 期請款，無法刪除`);
+    if (!confirm(`刪除報價單 ${q.id}（${q.version} · ${q.case}）？此動作無法復原。`)) return;
+    setQuotes(prev => prev.filter(x => x.id !== q.id));
+    if (selectedQuote?.id === q.id) setSelectedQuote(null);
+  };
+
+  // 刪除請款單：已收款的不給刪（帳務紀錄）
+  const deleteInvoice = (v) => {
+    if (v.status === 'ok') return alert(`${v.id} 已收款，無法刪除`);
+    if (!confirm(`刪除請款單 ${v.id}（${v.case}）？此動作無法復原。`)) return;
+    setInvoices(prev => prev.filter(x => x.id !== v.id));
+    // 回沖來源報價單的已請款額度
+    if (v.quoteId) {
+      setQuotes(prev => prev.map(q => q.id === v.quoteId
+        ? { ...q, invoicedCount: Math.max(0, (q.invoicedCount || 0) - 1), invoicedAmount: Math.max(0, (q.invoicedAmount || 0) - v.amount) }
+        : q));
+    }
+  };
+
+  // 案件編輯 / 刪除
+  const updateCase = (id, patch) => {
+    setCases(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c));
+    // 名稱變更同步到該案件的報價與請款單，避免各處顯示不一致
+    if (patch.name) {
+      setQuotes(prev => prev.map(q => q.caseId === id ? { ...q, case: patch.name } : q));
+      setInvoices(prev => prev.map(v => v.caseId === id ? { ...v, case: patch.name } : v));
+    }
+  };
+  const deleteCase = (c) => {
+    const qn = quotes.filter(q => q.caseId === c.id).length;
+    const vn = invoices.filter(v => v.caseId === c.id).length;
+    if (qn || vn) return alert(`${c.id} 尚有 ${qn} 張報價、${vn} 張請款，請先刪除後再移除案件`);
+    if (!confirm(`刪除案件 ${c.id}（${c.name}）？此動作無法復原。`)) return;
+    setCases(prev => prev.filter(x => x.id !== c.id));
+  };
+
+  // 業主簽回 — 同時為材料工項自動領料（工資項不扣）
   const signQuote = (id) => {
-    setQuotes(prev => prev.map(q => q.id === id
-      ? { ...q, status: 'ok', statusLabel: '已簽回', signedAt: todayISO() }
-      : q));
+    const q = quotes.find(x => x.id === id);
+    setQuotes(prev => prev.map(x => x.id === id
+      ? { ...x, status: 'ok', statusLabel: '已簽回', signedAt: todayISO() }
+      : x));
+    if (!q?.items?.length) return;
+
+    // 對應材料庫：優先用代碼，舊資料退回以品名比對
+    const taken = [];
+    const stockAfter = new Map();
+    q.items.filter(it => it.type !== 'labor').forEach(it => {
+      const m = materials.find(x => (it.code && x.code === it.code) || x.name === it.name);
+      if (!m || typeof m.stock !== 'number') return;
+      const have = stockAfter.has(m.code) ? stockAfter.get(m.code) : m.stock;
+      const take = Math.min(it.qty, have); // 不扣成負庫存；不足的部分由缺貨狀態呈現
+      if (take <= 0) return;
+      stockAfter.set(m.code, have - take);
+      taken.push({ code: m.code, name: m.name, unit: m.unit, qty: take });
+    });
+    if (!taken.length) return;
+
+    setMaterials(prev => prev.map(m => stockAfter.has(m.code) ? { ...m, stock: stockAfter.get(m.code) } : m));
+    setMoves(prev => [
+      ...taken.map((t, i) => ({
+        id: `M-${Date.now()}-${i}`,
+        date: todayISO(),
+        code: t.code, name: t.name, unit: t.unit,
+        type: 'out', qty: t.qty,
+        note: `${q.case} · 簽回自動領料`,
+      })),
+      ...prev,
+    ]);
   };
 
   // 同案件請款單流水號 — 從既有清單推算，避免與種子或手開請款撞號
@@ -185,7 +264,7 @@ export default function App() {
   const content = () => {
     switch (screen) {
       case 'dashboard': return <Dashboard cases={cases} invoices={invoices} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} onBuildQuote={openNewQuote} />;
-      case 'cases': return <CaseList cases={cases} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} />;
+      case 'cases': return <CaseList cases={cases} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} onUpdateCase={updateCase} onDeleteCase={deleteCase} />;
       case 'quote': return <QuoteBuilder
         key={selectedQuote?.id || selectedCase?.id || 'new'}
         caseData={selectedCase}
@@ -195,17 +274,19 @@ export default function App() {
               .sort((a, b) => (+String(a.version || 'v1').replace('v', '')) - (+String(b.version || 'v1').replace('v', '')))
           : []}
         materials={materials}
+        company={company}
         newQuoteNo={nextQuoteNo(quotes)}
         onClose={() => setScreen('quotes')}
         onSave={saveQuote}
         onOpenVersion={openQuoteDoc}
         onNewVersion={newQuoteVersion}
       />;
-      case 'quotes': return <QuotesList quotes={quotes} onNewQuote={openNewQuote} onOpenQuote={openQuoteDoc} onSign={signQuote} onConvert={convertQuote} onNewVersion={newQuoteVersion} />;
+      case 'quotes': return <QuotesList quotes={quotes} onNewQuote={openNewQuote} onOpenQuote={openQuoteDoc} onSign={signQuote} onConvert={convertQuote} onNewVersion={newQuoteVersion} onDelete={deleteQuote} />;
       case 'materials': return <MaterialsScreen materials={materials} cases={cases} moves={moves} onAdd={(m) => setMaterials(prev => [m, ...prev])} onUpdate={updateMaterial} onDelete={deleteMaterial} onMove={addMovement} />;
-      case 'billing': return <BillingScreen cases={cases} invoices={invoices} setInvoices={setInvoices} />;
+      case 'billing': return <BillingScreen cases={cases} invoices={invoices} setInvoices={setInvoices} onDelete={deleteInvoice} />;
       case 'reports': return <ReportsScreen cases={cases} invoices={invoices} />;
       case 'whitelist': return <WhitelistScreen session={session} onLogout={logout} list={whitelist} setList={setWhitelist} />;
+      case 'settings': return <SettingsScreen session={session} company={company} onSave={saveCompany} />;
       default: return null;
     }
   };

@@ -12,6 +12,7 @@ export const RAIL_ITEMS = [
   { id: 'billing', icon: 'receipt', label: '請款' },
   { id: 'reports', icon: 'activity', label: '報表' },
   { id: 'whitelist', icon: 'shield-check', label: '白名單' },
+  { id: 'settings', icon: 'settings', label: '設定' },
 ];
 
 export function Rail({ active, onNav, session, onLogout }) {
@@ -42,9 +43,6 @@ export function Rail({ active, onNav, session, onLogout }) {
           <span className="rail-btn-lbl">登出</span>
         </button>
       )}
-      <button className="rail-btn rail-btn-settings" title="設定">
-        <Icon name="settings" size={20} />
-      </button>
     </aside>
   );
 }

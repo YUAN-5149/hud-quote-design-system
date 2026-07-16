@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Panel, Metric, Chip, Button, Field, Input, Modal, Select, Icon } from '../components/Primitives.jsx';
 import { MATERIALS, MATERIAL_CATS } from '../lib/data.js';
-import { fmt, fmtMD, todayISO, addDays } from '../lib/format.js';
+import { fmt, fmtMD, todayISO, addDays, validateGUI } from '../lib/format.js';
 
 // ─────────────────────────────────────────────────────────────
 // NEW CASE MODAL
@@ -80,6 +80,7 @@ export function AddLineItemModal({ open, onClose, onAdd, materials = MATERIALS }
   const addFromCatalog = (m) => {
     onAdd({
       id: Date.now(),
+      code: m.code, // 供簽回自動扣料對應材料庫
       type: m.cat === '工資' ? 'labor' : 'material',
       name: m.name,
       qty: 1, unit: m.unit, price: m.price, cat: m.cat,
@@ -248,8 +249,80 @@ export function Dashboard({ cases, invoices = [], onOpenCase, onNewCase, onBuild
 // ─────────────────────────────────────────────────────────────
 // CASE LIST
 // ─────────────────────────────────────────────────────────────
-export function CaseList({ cases, onOpenCase, onNewCase }) {
+// 編輯案件 — 名稱、業主、統編、地點、進度、狀態
+const CASE_STATUS = [
+  { value: 'warn', label: '待確認' },
+  { value: 'active', label: '進行中' },
+  { value: 'alert', label: '逾期' },
+  { value: 'ok', label: '已完工' },
+];
+
+function EditCaseModal({ caseData, onClose, onSave }) {
+  const [form, setForm] = useState({
+    name: caseData.name, client: caseData.client, gui: caseData.gui || '',
+    location: caseData.location, progress: String(caseData.progress ?? 0), status: caseData.status,
+  });
+  const [err, setErr] = useState({});
+  const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const submit = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = '請輸入案件名稱';
+    const p = +form.progress;
+    if (Number.isNaN(p) || p < 0 || p > 100) e.progress = '進度須為 0–100';
+    if (form.gui && !validateGUI(form.gui)) e.gui = '統編檢核未通過';
+    setErr(e);
+    if (Object.keys(e).length) return;
+    onSave(caseData.id, {
+      name: form.name.trim(),
+      client: form.client.trim() || '—',
+      gui: form.gui.trim(),
+      location: form.location.trim() || '—',
+      progress: p,
+      status: form.status,
+      statusLabel: CASE_STATUS.find(s => s.value === form.status)?.label || form.status,
+    });
+    onClose();
+  };
+
+  return (
+    <Modal
+      open onClose={onClose}
+      title="編輯案件 · EDIT CASE" meta={caseData.id} width={560}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>取消</Button>
+          <Button variant="primary" icon="check" onClick={submit}>儲存變更</Button>
+        </>
+      }
+    >
+      <div className="quote-meta-grid">
+        <Field label="案件名稱 · NAME" error={err.name} helper="會同步更新此案件的報價與請款單">
+          <Input value={form.name} onChange={setF('name')} autoFocus />
+        </Field>
+        <Field label="業主 · CLIENT">
+          <Input value={form.client} onChange={setF('client')} />
+        </Field>
+        <Field label="統一編號 · GUI" error={err.gui}>
+          <Input value={form.gui} onChange={e => setForm({ ...form, gui: e.target.value.replace(/\D/g, '').slice(0, 8) })} placeholder="8 位數字" inputMode="numeric" />
+        </Field>
+        <Field label="工程地點 · LOCATION">
+          <Input value={form.location} onChange={setF('location')} />
+        </Field>
+        <Field label="狀態 · STATUS">
+          <Select value={form.status} onChange={v => setForm({ ...form, status: v })} options={CASE_STATUS} />
+        </Field>
+        <Field label="進度 · PROGRESS (%)" error={err.progress}>
+          <Input type="number" value={form.progress} onChange={setF('progress')} inputMode="numeric" />
+        </Field>
+      </div>
+    </Modal>
+  );
+}
+
+export function CaseList({ cases, onOpenCase, onNewCase, onUpdateCase, onDeleteCase }) {
   const [q, setQ] = useState('');
+  const [editing, setEditing] = useState(null);
   const filtered = useMemo(() =>
     cases.filter(c => c.name.includes(q) || c.id.includes(q) || c.client.includes(q)),
   [q, cases]);
@@ -270,7 +343,7 @@ export function CaseList({ cases, onOpenCase, onNewCase }) {
         <div className="table-scroll">
           <table className="data-table">
             <thead>
-              <tr><th>CASE</th><th>名稱 / 業主</th><th>地區</th><th>進度</th><th>狀態</th><th style={{ textAlign: 'right' }}>金額</th></tr>
+              <tr><th>CASE</th><th>名稱 / 業主</th><th>地區</th><th>進度</th><th>狀態</th><th style={{ textAlign: 'right' }}>金額</th><th style={{ textAlign: 'right' }}>操作</th></tr>
             </thead>
             <tbody>
               {filtered.map(c => (
@@ -284,15 +357,22 @@ export function CaseList({ cases, onOpenCase, onNewCase }) {
                   </td>
                   <td><Chip kind={c.status}>{c.statusLabel}</Chip></td>
                   <td className="mono" style={{ textAlign: 'right' }}>{fmt(c.amount)}</td>
+                  <td style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display: 'inline-flex', gap: 6 }}>
+                      <button className="icon-btn" title="編輯案件" onClick={() => setEditing(c)}><Icon name="pencil" size={13} /></button>
+                      <button className="icon-btn" title="刪除案件" onClick={() => onDeleteCase(c)}><Icon name="trash-2" size={13} /></button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--fg-3)', padding: 32 }}>無符合案件</td></tr>
+                <tr><td colSpan={7} style={{ textAlign: 'center', color: 'var(--fg-3)', padding: 32 }}>無符合案件</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </Panel>
+      {editing && <EditCaseModal caseData={editing} onClose={() => setEditing(null)} onSave={onUpdateCase} />}
     </div>
   );
 }
@@ -359,7 +439,7 @@ function ConvertModal({ quote, onClose, onConvert }) {
   );
 }
 
-export function QuotesList({ quotes = [], onNewQuote, onOpenQuote, onSign, onConvert, onNewVersion }) {
+export function QuotesList({ quotes = [], onNewQuote, onOpenQuote, onSign, onConvert, onNewVersion, onDelete }) {
   const [converting, setConverting] = useState(null);
   const monthKey = todayISO().slice(0, 7);
   const sorted = [...quotes].sort((a, b) => (b.issuedAt || '').localeCompare(a.issuedAt || ''));
@@ -429,6 +509,11 @@ export function QuotesList({ quotes = [], onNewQuote, onOpenQuote, onSign, onCon
                       )}
                       {q.status === 'ok' && remaining <= 0 && (
                         <span className="mono-label" style={{ color: 'var(--ok)' }}>已全額請款</span>
+                      )}
+                      {!q.invoicedCount && (
+                        <button className="icon-btn" title="刪除報價單" style={{ marginLeft: 6 }} onClick={() => onDelete(q)}>
+                          <Icon name="trash-2" size={13} />
+                        </button>
                       )}
                     </td>
                   </tr>

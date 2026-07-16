@@ -89,7 +89,7 @@ const QUOTE_LABELS = { info: '草稿', warn: '待業主簽回', ok: '已簽回' 
 // 工項：以材料庫代碼 + 數量帶出品名／單價，金額由工項計算（含 5% 營業稅）
 const li = (code, qty) => {
   const m = MATERIALS.find(x => x.code === code);
-  return { id: code, type: m.cat === '工資' ? 'labor' : 'material', name: m.name, qty, unit: m.unit, price: m.price, cat: m.cat };
+  return { id: code, code, type: m.cat === '工資' ? 'labor' : 'material', name: m.name, qty, unit: m.unit, price: m.price, cat: m.cat };
 };
 const quoteAmount = (items) => {
   const sub = items.reduce((s, it) => s + it.qty * it.price, 0);
@@ -192,11 +192,13 @@ export const INVOICES_SEED = [
   mkInv(1, '老屋全室管線重拉',     '全額 · 一次付清',   154800, [11, 11],[10, 11], [11, 25]),
 ];
 
-// 報價單抬頭（工程行自家資料 — 之後移到設定頁）
-export const COMPANY = {
-  name: '宏達水電工程行',
-  gui: '12345675',
-  phone: '02-2723-1234',
-  address: '台北市信義區松德路 12 號 1F',
-  bank: '第一銀行 信義分行 · 123-45-678901',
-};
+// 報價單抬頭 — 於設定頁維護，存 Firestore settings/company
+// 預設留空：未設定前列印會顯示提示，避免印出錯誤的公司與匯款資訊
+export const COMPANY_SEED = [{
+  id: 'company',
+  name: '',
+  gui: '',
+  phone: '',
+  address: '',
+  bank: '',
+}];

@@ -45,4 +45,15 @@ export default defineConfig({
     }),
   ],
   base: './',
+  build: {
+    rollupOptions: {
+      output: {
+        // 分開 vendor：改 App 程式碼時 firebase/react 的快取不會失效
+        manualChunks: {
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          react: ['react', 'react-dom'],
+        },
+      },
+    },
+  },
 });
