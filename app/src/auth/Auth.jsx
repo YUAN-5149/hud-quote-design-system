@@ -1,6 +1,76 @@
 import { useState } from 'react';
-import { Panel, Metric, Chip, Field, Input, Select, Icon } from '../components/Primitives.jsx';
-import { loginWithPhone } from '../lib/session.js';
+import { Panel, Metric, Chip, Button, Field, Input, Modal, Select, Icon } from '../components/Primitives.jsx';
+import { loginWithPhone, changePasscode } from '../lib/session.js';
+
+// ─────────────────────────────────────────────────────────────
+// 修改通行碼
+// ─────────────────────────────────────────────────────────────
+function PasscodeModal({ session, onClose }) {
+  const [cur, setCur] = useState('');
+  const [next, setNext] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const submit = async (e) => {
+    e && e.preventDefault();
+    setErr('');
+    if (!cur || !next) return setErr('請填寫現行通行碼與新通行碼');
+    if (next !== confirm) return setErr('兩次輸入的新通行碼不一致');
+    setBusy(true);
+    const res = await changePasscode(cur, next);
+    setBusy(false);
+    if (res.error) return setErr(res.error);
+    setDone(true);
+    setTimeout(onClose, 1600);
+  };
+
+  return (
+    <Modal
+      open onClose={onClose}
+      title="修改通行碼 · CHANGE PASSCODE"
+      meta={done ? 'UPDATED' : session.phone}
+      width={480}
+      footer={done ? null : (
+        <>
+          <Button variant="ghost" onClick={onClose}>取消</Button>
+          <Button variant="primary" icon="check" onClick={submit} disabled={busy}>
+            {busy ? '更新中…' : '更新通行碼'}
+          </Button>
+        </>
+      )}
+    >
+      {done ? (
+        <div style={{ padding: '24px 8px', textAlign: 'center' }}>
+          <div className="mono-label" style={{ color: 'var(--ok)', marginBottom: 8 }}>PASSCODE UPDATED</div>
+          <div style={{ fontFamily: 'var(--font-tc)', color: 'var(--fg-1)' }}>
+            通行碼已更新，下次登入請使用新通行碼
+          </div>
+        </div>
+      ) : (
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <Field label="現行通行碼 · CURRENT">
+            <Input type="password" value={cur} onChange={e => setCur(e.target.value)} autoComplete="current-password" autoFocus />
+          </Field>
+          <Field label="新通行碼 · NEW" helper="至少 6 個字元">
+            <Input type="password" value={next} onChange={e => setNext(e.target.value)} autoComplete="new-password" />
+          </Field>
+          <Field label="確認新通行碼 · CONFIRM" error={confirm && next !== confirm ? '兩次輸入不一致' : ''}>
+            <Input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete="new-password" />
+          </Field>
+          {err && (
+            <div className="login-err" style={{ marginTop: 4 }}>
+              <Icon name="shield-alert" size={14} />
+              <span>{err}</span>
+            </div>
+          )}
+          <button type="submit" style={{ display: 'none' }} />
+        </form>
+      )}
+    </Modal>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────
 // Login Screen — full-viewport HUD console
@@ -161,6 +231,7 @@ export function LoginScreen({ onAuth }) {
 export function WhitelistScreen({ session, onLogout, list, setList }) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
+  const [passOpen, setPassOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ phone: '', name: '', role: '工班', note: '' });
 
@@ -240,9 +311,14 @@ export function WhitelistScreen({ session, onLogout, list, setList }) {
             </div>
           </div>
           <div style={{ flex: 1 }} />
-          <button className="btn btn-solid" onClick={onLogout}>
-            <Icon name="log-out" size={14} /><span>登出</span>
-          </button>
+          <div className="wl-session-actions">
+            <button className="btn btn-solid" onClick={() => setPassOpen(true)}>
+              <Icon name="key-round" size={14} /><span>修改通行碼</span>
+            </button>
+            <button className="btn btn-solid" onClick={onLogout}>
+              <Icon name="log-out" size={14} /><span>登出</span>
+            </button>
+          </div>
         </div>
       </Panel>
 
@@ -357,6 +433,8 @@ export function WhitelistScreen({ session, onLogout, list, setList }) {
           </section>
         </div>
       )}
+
+      {passOpen && <PasscodeModal session={session} onClose={() => setPassOpen(false)} />}
     </div>
   );
 }

@@ -2,6 +2,8 @@
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table-scroll .data-table { min-width: 560px; }
 
+.wl-session-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
 .calc-upper {
   margin: 10px 0 4px;
   color: var(--fg-2);
@@ -162,6 +164,11 @@
   .table-scroll .data-table { min-width: 100%; width: max-content; }
   .table-scroll .data-table th,
   .table-scroll .data-table td { white-space: nowrap; }
+
+  /* 身分卡：頭像／資訊與按鈕改上下堆疊 */
+  .wl-session { flex-wrap: wrap; }
+  .wl-session-actions { width: 100%; }
+  .wl-session-actions .btn { flex: 1; }
 
   /* 材料工具列：搜尋框與分類頁籤改上下堆疊 */
   .materials-toolbar { flex-direction: column; align-items: stretch; }

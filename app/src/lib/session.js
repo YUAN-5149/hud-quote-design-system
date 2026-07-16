@@ -3,6 +3,7 @@
 // 白名單成員首次登入（通行碼 = 完整手機號）自動開通帳號
 import {
   signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
+  reauthenticateWithCredential, updatePassword, EmailAuthProvider,
 } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 import { db, auth } from './firebase.js';
@@ -83,6 +84,34 @@ export async function loginWithPhone(phone, passcode) {
       loginAt: new Date().toISOString(),
     },
   };
+}
+
+// 修改通行碼 — 先以現行通行碼重新驗證，再更新
+// 回傳 { ok: true } 或 { error }
+export async function changePasscode(currentPass, newPass) {
+  if (!auth) return { error: '離線模式無法修改通行碼 // OFFLINE' };
+  const user = auth.currentUser;
+  if (!user) return { error: '登入階段已過期，請重新登入 // SESSION EXPIRED' };
+  if (newPass.length < 6) return { error: '新通行碼至少 6 個字元' };
+  if (newPass === currentPass) return { error: '新通行碼與現行通行碼相同' };
+
+  try {
+    const cred = EmailAuthProvider.credential(user.email, currentPass);
+    await reauthenticateWithCredential(user, cred);
+  } catch (e) {
+    const code = e?.code || '';
+    if (code === 'auth/too-many-requests') return { error: '嘗試次數過多，請稍後再試 // RATE LIMITED' };
+    return { error: '現行通行碼錯誤 // WRONG PASSCODE' };
+  }
+
+  try {
+    await updatePassword(user, newPass);
+    return { ok: true };
+  } catch (e) {
+    if (e?.code === 'auth/weak-password') return { error: '新通行碼強度不足，請換一組' };
+    console.warn('更新通行碼失敗', e);
+    return { error: '更新失敗，請稍後再試 // UPDATE FAILED' };
+  }
 }
 
 export async function logoutAuth() {
