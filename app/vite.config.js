@@ -1,6 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { readFileSync } from 'node:fs';
+
+// 版本與建置日期取自實際來源，狀態列不再顯示編造的版號
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+const buildDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
 // base is overridden by the GitHub Pages deploy script via --base
 export default defineConfig({
@@ -45,6 +50,10 @@ export default defineConfig({
     }),
   ],
   base: './',
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __BUILD_DATE__: JSON.stringify(buildDate),
+  },
   build: {
     rollupOptions: {
       output: {

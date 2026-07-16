@@ -173,13 +173,45 @@ export function AddLineItemModal({ open, onClose, onAdd, materials = MATERIALS }
 // ─────────────────────────────────────────────────────────────
 // DASHBOARD
 // ─────────────────────────────────────────────────────────────
-export function Dashboard({ cases, invoices = [], onOpenCase, onNewCase, onBuildQuote }) {
+export function Dashboard({ cases, invoices = [], quotes = [], materials = [], onOpenCase, onNewCase, onBuildQuote, onNav }) {
   const activeCases = cases.filter(c => c.status === 'active');
   const monthKey = todayISO().slice(0, 7);
   const paidThisMonth = invoices.filter(v => v.paidAt && v.paidAt.slice(0, 7) === monthKey);
   const unpaid = invoices.filter(v => v.status !== 'ok');
-  const overdueCount = invoices.filter(v => v.status === 'alert').length;
+  const overdueInvoices = invoices.filter(v => v.status === 'alert');
+  const overdueCount = overdueInvoices.length;
   const sum = (list) => list.reduce((s, v) => s + v.amount, 0);
+
+  // 報價：待簽回與逾期未簽（逾期＝送出後超過有效期）
+  const awaitingQuotes = quotes.filter(q => effQuoteStatus(q) === 'warn');
+  const overdueQuoteList = quotes.filter(q => effQuoteStatus(q) === 'alert');
+  const overdueQuotes = overdueQuoteList.length;
+
+  // 營運指標 — 全部由實際資料計算
+  const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
+  const issuedTotal = sum(invoices);
+  const paidTotal = sum(invoices.filter(v => v.status === 'ok'));
+  const signedQuotes = quotes.filter(q => q.status === 'ok').length;
+  const sentQuotes = quotes.filter(q => q.status !== 'info').length;
+  const stockItems = materials.filter(m => typeof m.stock === 'number');
+  const healthyStock = stockItems.filter(m => m.stock >= 10).length;
+  const doneCases = cases.filter(c => c.progress === 100 || c.status === 'ok').length;
+  const bar = (p, warnBelow) => (p >= warnBelow ? 'var(--accent)' : p >= warnBelow / 2 ? 'var(--warn)' : 'var(--alert)');
+  const ratios = [
+    { label: '請款回收率', pct: pct(paidTotal, issuedTotal), color: bar(pct(paidTotal, issuedTotal), 70) },
+    { label: '報價簽回率', pct: pct(signedQuotes, sentQuotes), color: bar(pct(signedQuotes, sentQuotes), 60) },
+    { label: '案件完成率', pct: pct(doneCases, cases.length), color: bar(pct(doneCases, cases.length), 50) },
+    { label: '庫存充足率', pct: pct(healthyStock, stockItems.length), color: bar(pct(healthyStock, stockItems.length), 60) },
+  ];
+
+  // 待處理 — 由逾期／缺貨資料推出，點擊直接跳到對應畫面
+  const lowStock = stockItems.filter(m => m.stock === 0);
+  const todos = [
+    overdueCount && { key: 'inv', count: overdueCount, label: `逾期未收款 ${fmt(sum(overdueInvoices))}`, tag: '催款', kind: 'alert', onClick: () => onNav?.('billing') },
+    overdueQuotes && { key: 'q', count: overdueQuotes, label: '報價逾期未簽，需聯絡業主', tag: '追蹤', kind: 'warn', onClick: () => onNav?.('quotes') },
+    lowStock.length && { key: 'm', count: lowStock.length, label: `材料缺貨：${lowStock.map(m => m.name).join('、')}`, tag: '補貨', kind: 'alert', onClick: () => onNav?.('materials') },
+  ].filter(Boolean);
+
   return (
     <div className="screen" data-screen-label="Dashboard">
       <div className="screen-header">
@@ -199,8 +231,14 @@ export function Dashboard({ cases, invoices = [], onOpenCase, onNewCase, onBuild
         <Panel title="待收款項" meta="RECEIVABLE">
           <Metric label="UNPAID" value={fmt(sum(unpaid))} sub={`${unpaid.length} 張`} delta={overdueCount ? `${overdueCount} 張逾期` : '無逾期'} deltaKind={overdueCount ? 'alert' : 'ok'} />
         </Panel>
-        <Panel title="本月工時" meta="LOG">
-          <Metric label="LABOR HOURS" value="214.5" sub="HR · 3 師傅" delta="▲ 效率 94%" />
+        <Panel title="待業主簽回" meta="QUOTES">
+          <Metric
+            label="AWAITING"
+            value={fmt(sum(awaitingQuotes))}
+            sub={`${awaitingQuotes.length} 張`}
+            delta={overdueQuotes ? `${overdueQuotes} 張逾期未簽` : '無逾期'}
+            deltaKind={overdueQuotes ? 'alert' : 'ok'}
+          />
         </Panel>
       </div>
       <div className="two-col">
@@ -225,20 +263,38 @@ export function Dashboard({ cases, invoices = [], onOpenCase, onNewCase, onBuild
           </div>
         </Panel>
         <div className="stack">
-          <Panel title="系統狀態" meta="TELEMETRY">
+          <Panel title="營運指標" meta="LIVE RATIOS">
             <div className="tele-list">
-              <div className="tele-row"><span className="tele-lbl">節點連線</span><span className="tele-bar"><span className="tele-fill" style={{ width: '94%', background: 'var(--ok)' }} /></span><span className="tele-v">94%</span></div>
-              <div className="tele-row"><span className="tele-lbl">本月達成率</span><span className="tele-bar"><span className="tele-fill" style={{ width: '72%' }} /></span><span className="tele-v">72%</span></div>
-              <div className="tele-row"><span className="tele-lbl">材料庫存</span><span className="tele-bar"><span className="tele-fill" style={{ width: '38%', background: 'var(--warn)' }} /></span><span className="tele-v">38%</span></div>
-              <div className="tele-row"><span className="tele-lbl">請款回收</span><span className="tele-bar"><span className="tele-fill" style={{ width: '81%' }} /></span><span className="tele-v">81%</span></div>
+              {ratios.map(r => (
+                <div className="tele-row" key={r.label}>
+                  <span className="tele-lbl">{r.label}</span>
+                  <span className="tele-bar">
+                    <span className="tele-fill" style={{ width: r.pct + '%', background: r.color }} />
+                  </span>
+                  <span className="tele-v">{r.pct}%</span>
+                </div>
+              ))}
             </div>
           </Panel>
-          <Panel title="今日排程" meta="3 TASKS">
-            <ul className="task-list">
-              <li><span className="task-time mono">09:00</span><span className="task-lbl">新莊 · 冷氣配線現勘</span><Chip kind="info">現勘</Chip></li>
-              <li><span className="task-time mono">13:30</span><span className="task-lbl">文心飯店機房驗收</span><Chip kind="alert">逾期</Chip></li>
-              <li><span className="task-time mono">16:00</span><span className="task-lbl">大明商辦報價複核</span><Chip kind="warn">待確認</Chip></li>
-            </ul>
+          <Panel title="待處理" meta={todos.length ? `${todos.length} ITEMS` : 'ALL CLEAR'}>
+            {todos.length ? (
+              <ul className="task-list">
+                {todos.map(t => (
+                  <li key={t.key} onClick={t.onClick} style={{ cursor: 'pointer' }}>
+                    <span className="task-time mono">{t.count}</span>
+                    <span className="task-lbl">{t.label}</span>
+                    <Chip kind={t.kind}>{t.tag}</Chip>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div style={{ padding: '28px 12px', textAlign: 'center' }}>
+                <div className="mono-label" style={{ color: 'var(--ok)', marginBottom: 8 }}>ALL CLEAR</div>
+                <div style={{ fontFamily: 'var(--font-tc)', fontSize: 13, color: 'var(--fg-3)' }}>
+                  沒有逾期款項、逾期報價或缺貨品項
+                </div>
+              </div>
+            )}
           </Panel>
         </div>
       </div>
@@ -930,7 +986,6 @@ export function ReportsScreen({ cases = [], invoices = [] }) {
               <button key={v} className={`cat-tab ${range===v?'active':''}`} onClick={() => setRange(v)}>{l}</button>
             ))}
           </div>
-          <Button variant="ghost" icon="download">匯出 PDF</Button>
         </div>
       </div>
 

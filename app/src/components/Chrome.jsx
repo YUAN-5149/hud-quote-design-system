@@ -47,11 +47,28 @@ export function Rail({ active, onNav, session, onLogout }) {
   );
 }
 
+// 真實連線狀態 — 離線時 Firestore 走本機快取，恢復連線自動同步
+function useOnline() {
+  const [online, setOnline] = useState(() => navigator.onLine);
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, []);
+  return online;
+}
+
 // ─────────────────────────────────────────────────────────────
 // Top Bar
 // ─────────────────────────────────────────────────────────────
 export function TopBar({ screenLabel, session, onLogout }) {
   const [time, setTime] = useState(new Date());
+  const online = useOnline();
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
@@ -66,8 +83,10 @@ export function TopBar({ screenLabel, session, onLogout }) {
         <span className="bc-current">{screenLabel}</span>
       </div>
       <div className="topbar-status">
-        <span className="status-dot ok" />
-        <span className="mono-label tb-hide-sm">SYSTEM ONLINE · 17 NODES</span>
+        <span className={`status-dot ${online ? 'ok' : 'alert'}`} />
+        <span className="mono-label tb-hide-sm" style={{ color: online ? undefined : 'var(--warn)' }}>
+          {online ? 'ONLINE · 已連線' : 'OFFLINE · 離線編輯中'}
+        </span>
         <span className="bc-sep tb-hide-sm">·</span>
         <span className="mono-label tb-hide-sm" style={{ color: 'var(--fg-1)' }}>{ymd}</span>
         <span className="bc-sep tb-hide-sm">·</span>
@@ -90,19 +109,20 @@ export function TopBar({ screenLabel, session, onLogout }) {
 // Status bar (bottom)
 // ─────────────────────────────────────────────────────────────
 export function StatusBar({ session }) {
+  const online = useOnline();
   return (
     <footer className="statusbar">
-      <span className="mono-label">DB · SYNCED</span>
+      <span className="mono-label" style={{ color: online ? 'var(--ok)' : 'var(--warn)' }}>
+        DB · {online ? 'SYNCED' : 'OFFLINE CACHE'}
+      </span>
       <span className="sep">·</span>
-      <span className="mono-label">LATENCY 14ms</span>
-      <span className="sep">·</span>
-      <span className="mono-label">REGION TPE-N</span>
+      <span className="mono-label">REGION asia-east1</span>
       {session && (<>
         <span className="sep">·</span>
         <span className="mono-label" style={{ color: 'var(--ok)' }}>SESSION · {session.phone}</span>
       </>)}
       <span style={{ flex: 1 }} />
-      <span className="mono-label" style={{ color: 'var(--fg-3)' }}>v2.4.1 · BUILD 18026</span>
+      <span className="mono-label" style={{ color: 'var(--fg-3)' }}>v{__APP_VERSION__} · BUILD {__BUILD_DATE__}</span>
     </footer>
   );
 }

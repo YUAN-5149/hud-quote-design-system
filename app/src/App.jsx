@@ -263,7 +263,7 @@ export default function App() {
 
   const content = () => {
     switch (screen) {
-      case 'dashboard': return <Dashboard cases={cases} invoices={invoices} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} onBuildQuote={openNewQuote} />;
+      case 'dashboard': return <Dashboard cases={cases} invoices={invoices} quotes={quotes} materials={materials} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} onBuildQuote={openNewQuote} onNav={setScreen} />;
       case 'cases': return <CaseList cases={cases} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} onUpdateCase={updateCase} onDeleteCase={deleteCase} />;
       case 'quote': return <QuoteBuilder
         key={selectedQuote?.id || selectedCase?.id || 'new'}
