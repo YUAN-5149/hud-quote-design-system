@@ -9,7 +9,7 @@ import { auth } from './lib/firebase.js';
 import { loadSession, saveSession, logoutAuth, WL_SEED } from './lib/session.js';
 import { useSyncedCollection } from './lib/store.js';
 import { CASES_SEED, INVOICES_SEED, QUOTES_SEED, MATERIALS, MOVES_SEED } from './lib/data.js';
-import { todayISO } from './lib/format.js';
+import { todayISO, addDays } from './lib/format.js';
 
 const LABELS = {
   dashboard: 'COMMAND · 主控台',
@@ -95,6 +95,36 @@ export default function App() {
     if (goToList) setScreen('quotes');
   };
 
+  // 建立新版本：複製內容為草稿，版本號 +1；舊版本原封保留供回顧
+  const newQuoteVersion = (quote) => {
+    const sameCase = quotes.filter(q => q.caseId === quote.caseId);
+    const verNum = (q) => +String(q.version || 'v1').replace('v', '') || 0;
+    const nextV = sameCase.reduce((m, q) => Math.max(m, verNum(q)), 0) + 1;
+    const base = `Q-${quote.caseId.replace('#', '')}`;
+    const suffix = nextV <= 26 ? String.fromCharCode(64 + nextV) : `V${nextV}`;
+    let id = `${base}-${suffix}`;
+    let n = 2;
+    while (quotes.some(q => q.id === id)) id = `${base}-${suffix}${n++}`;
+
+    const rec = {
+      ...quote,
+      id,
+      version: `v${nextV}`,
+      status: 'info', statusLabel: '草稿',
+      issuedAt: todayISO(),
+      validAt: addDays(todayISO(), 30),
+      signedAt: null,
+      invoicedCount: 0,
+      invoicedAmount: 0,
+      info: quote.info ? { ...quote.info, quoteNo: id } : null,
+      _ord: Date.now(),
+    };
+    setQuotes(prev => [rec, ...prev]);
+    setSelectedCase(cases.find(c => c.id === quote.caseId) || null);
+    setSelectedQuote(rec);
+    setScreen('quote');
+  };
+
   // 業主簽回
   const signQuote = (id) => {
     setQuotes(prev => prev.map(q => q.id === id
@@ -129,8 +159,21 @@ export default function App() {
     switch (screen) {
       case 'dashboard': return <Dashboard cases={cases} invoices={invoices} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} onBuildQuote={openNewQuote} />;
       case 'cases': return <CaseList cases={cases} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} />;
-      case 'quote': return <QuoteBuilder key={selectedQuote?.id || selectedCase?.id || 'new'} caseData={selectedCase} quote={selectedQuote} materials={materials} onClose={() => setScreen('quotes')} onSave={saveQuote} />;
-      case 'quotes': return <QuotesList quotes={quotes} onNewQuote={openNewQuote} onOpenQuote={openQuoteDoc} onSign={signQuote} onConvert={convertQuote} />;
+      case 'quote': return <QuoteBuilder
+        key={selectedQuote?.id || selectedCase?.id || 'new'}
+        caseData={selectedCase}
+        quote={selectedQuote}
+        versions={selectedQuote
+          ? quotes.filter(q => q.caseId === selectedQuote.caseId)
+              .sort((a, b) => (+String(a.version || 'v1').replace('v', '')) - (+String(b.version || 'v1').replace('v', '')))
+          : []}
+        materials={materials}
+        onClose={() => setScreen('quotes')}
+        onSave={saveQuote}
+        onOpenVersion={openQuoteDoc}
+        onNewVersion={newQuoteVersion}
+      />;
+      case 'quotes': return <QuotesList quotes={quotes} onNewQuote={openNewQuote} onOpenQuote={openQuoteDoc} onSign={signQuote} onConvert={convertQuote} onNewVersion={newQuoteVersion} />;
       case 'materials': return <MaterialsScreen materials={materials} cases={cases} moves={moves} onAdd={(m) => setMaterials(prev => [m, ...prev])} onUpdate={updateMaterial} onDelete={deleteMaterial} onMove={addMovement} />;
       case 'billing': return <BillingScreen cases={cases} invoices={invoices} setInvoices={setInvoices} />;
       case 'reports': return <ReportsScreen cases={cases} invoices={invoices} />;

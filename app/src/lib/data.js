@@ -85,30 +85,67 @@ const addDaysISO = (dateISO, days) => {
   return isoOf(d);
 };
 const QUOTE_LABELS = { info: '草稿', warn: '待業主簽回', ok: '已簽回' };
-const mkQuote = (caseRef, version, status, issued, opts = {}) => {
+
+// 工項：以材料庫代碼 + 數量帶出品名／單價，金額由工項計算（含 5% 營業稅）
+const li = (code, qty) => {
+  const m = MATERIALS.find(x => x.code === code);
+  return { id: code, type: m.cat === '工資' ? 'labor' : 'material', name: m.name, qty, unit: m.unit, price: m.price, cat: m.cat };
+};
+const quoteAmount = (items) => {
+  const sub = items.reduce((s, it) => s + it.qty * it.price, 0);
+  return sub + Math.round(sub * 0.05);
+};
+
+const mkQuote = (caseRef, version, status, issued, items, opts = {}) => {
   const c = CASES_SEED.find(x => x.name === caseRef);
   const issuedAt = monthsAgo(issued[0], issued[1]);
+  const id = `Q-${c.id.replace('#', '')}-${String.fromCharCode(64 + +version.slice(1))}`;
+  const amount = quoteAmount(items);
   return {
-    id: `Q-${c.id.replace('#', '')}-${String.fromCharCode(64 + +version.slice(1))}`,
+    id,
     caseId: c.id, case: c.name, client: c.client.split(' · ')[0], gui: c.gui,
     version, status, statusLabel: QUOTE_LABELS[status],
-    amount: opts.amount ?? c.amount,
+    amount,
     issuedAt, validAt: addDaysISO(issuedAt, 30),
     signedAt: opts.signed ? monthsAgo(opts.signed[0], opts.signed[1]) : null,
     invoicedCount: opts.invoicedCount || 0,
-    invoicedAmount: opts.invoicedAmount || 0,
-    items: null, info: null, taxInc: true,
+    // fullyInvoiced：已全額請款（金額隨工項變動，故由 amount 帶出）
+    invoicedAmount: opts.fullyInvoiced ? amount : (opts.invoicedAmount || 0),
+    items,
+    info: {
+      quoteNo: id,
+      name: c.name,
+      client: c.client,
+      gui: c.gui,
+      phone: '02-2723-xxxx',
+      location: c.location,
+      duration: '14 天',
+    },
+    taxInc: true,
   };
 };
 
+// 大明商辦：v2 為初版，v3 業主追加電線與配電盤 → 兩版工項與金額不同，可互相對照
+const DAMING_V2 = [li('NFB-3P-100', 2), li('PVC-1-4M', 24), li('PNL-60-80', 1), li('LBR-ELEC-S', 60), li('LBR-GND', 1)];
+const DAMING_V3 = [...DAMING_V2, li('WIRE-5-5', 6)];
+
 export const QUOTES_SEED = [
-  mkQuote('大明商辦 3F 配電工程',   'v3', 'warn', [0, 8]),
-  mkQuote('大明商辦 3F 配電工程',   'v2', 'warn', [1, 2],  { amount: 121800 }), // 超過 30 天 → UI 顯示逾期未簽
-  mkQuote('信義區吳公館整修',       'v1', 'info', [0, 6]),
-  mkQuote('文心飯店地下機房配管',   'v2', 'ok',   [3, 10], { signed: [3, 20], invoicedCount: 2, invoicedAmount: 312800 }),
-  mkQuote('松山火鍋店冷凍配電',     'v1', 'ok',   [1, 8],  { signed: [1, 9],  invoicedCount: 1, invoicedAmount: 92500 }),
-  mkQuote('林口集合住宅熱水管線',   'v2', 'ok',   [2, 6],  { signed: [2, 7],  invoicedCount: 1, invoicedAmount: 93400 }),
-  mkQuote('板橋誠品門市照明更新',   'v1', 'ok',   [2, 2],  { signed: [2, 3],  invoicedCount: 1, invoicedAmount: 64200 }),
+  mkQuote('大明商辦 3F 配電工程', 'v3', 'warn', [0, 8], DAMING_V3),
+  mkQuote('大明商辦 3F 配電工程', 'v2', 'warn', [1, 2], DAMING_V2), // 超過 30 天 → UI 顯示逾期未簽
+  mkQuote('信義區吳公館整修', 'v1', 'info', [0, 6],
+    [li('PVC-3-4-4M', 18), li('WIRE-2-0', 4), li('LBR-PLB', 24), li('LBR-ELEC-J', 16)]),
+  mkQuote('文心飯店地下機房配管', 'v2', 'ok', [3, 10],
+    [li('NFB-3P-100', 4), li('PNL-60-80', 6), li('PVC-1-4M', 120), li('WIRE-5-5', 24), li('LBR-ELEC-S', 60)],
+    { signed: [3, 20], invoicedCount: 2, fullyInvoiced: true }),
+  mkQuote('松山火鍋店冷凍配電', 'v1', 'ok', [1, 8],
+    [li('NFB-2P-30', 4), li('WIRE-2-0', 8), li('PVC-3-4-4M', 40), li('LBR-ELEC-S', 48), li('LBR-GND', 1)],
+    { signed: [1, 9], invoicedCount: 1, fullyInvoiced: true }),
+  mkQuote('林口集合住宅熱水管線', 'v2', 'ok', [2, 6],
+    [li('PIPE-CU-15', 36), li('LBR-PLB', 96), li('LBR-ELEC-J', 40)],
+    { signed: [2, 7], invoicedCount: 1, invoicedAmount: 93400 }), // 僅收訂金，尚可續請款
+  mkQuote('板橋誠品門市照明更新', 'v1', 'ok', [2, 2],
+    [li('NFB-2P-30', 6), li('WIRE-2-0', 6), li('PVC-3-4-4M', 30), li('LBR-ELEC-S', 32)],
+    { signed: [2, 3], invoicedCount: 1, fullyInvoiced: true }),
 ];
 
 // 請款單種子（BILLING）— 以案件為本，鋪滿近 12 個月

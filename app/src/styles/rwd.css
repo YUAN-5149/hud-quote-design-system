@@ -4,6 +4,49 @@
 
 .wl-session-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
+/* ── 報價版本列 ───────────────────────────────────────────── */
+.version-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: var(--bg-panel-2);
+  border: 1px solid var(--line-faint);
+  border-left: 2px solid var(--accent);
+}
+.version-bar > .mono-label { color: var(--fg-3); flex-shrink: 0; }
+.version-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.version-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--line-base);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 200ms var(--ease-out);
+}
+.version-chip:hover { color: var(--fg-1); border-color: var(--line-active); }
+.version-chip.active {
+  background: var(--accent-tint);
+  border-color: var(--accent);
+  color: var(--accent);
+  cursor: default;
+}
+.version-note {
+  font-family: var(--font-tc);
+  font-size: 11px;
+  color: var(--fg-3);
+  margin-left: auto;
+  text-align: right;
+}
+
 .calc-upper {
   margin: 10px 0 4px;
   color: var(--fg-2);
@@ -164,6 +207,10 @@
   .table-scroll .data-table { min-width: 100%; width: max-content; }
   .table-scroll .data-table th,
   .table-scroll .data-table td { white-space: nowrap; }
+
+  /* 版本列：標籤／版本／說明改上下堆疊 */
+  .version-bar { flex-wrap: wrap; gap: 8px; }
+  .version-note { margin-left: 0; flex: 1 1 100%; text-align: left; }
 
   /* 身分卡：頭像／資訊與按鈕改上下堆疊 */
   .wl-session { flex-wrap: wrap; }

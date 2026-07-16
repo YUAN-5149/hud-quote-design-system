@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Panel, Chip, Button, Field, Input, Toggle, Icon } from '../components/Primitives.jsx';
 import { AddLineItemModal } from './Screens.jsx';
 import { LINE_ITEMS_INIT, COMPANY } from '../lib/data.js';
-import { fmt, toChineseUpper, validateGUI, todayYMD, todayISO, addDays } from '../lib/format.js';
+import { fmt, fmtMD, toChineseUpper, validateGUI, todayYMD, todayISO, addDays } from '../lib/format.js';
 
 // ─────────────────────────────────────────────────────────────
 // 列印版報價單 — 白底正式文件（@media print 才顯示，見 print.css）
@@ -92,7 +92,9 @@ function PrintQuote({ info, items, subtotal, tax, total, taxInc }) {
 // ─────────────────────────────────────────────────────────────
 // QUOTE BUILDER
 // ─────────────────────────────────────────────────────────────
-export function QuoteBuilder({ caseData, quote, materials, onClose, onSave }) {
+export function QuoteBuilder({ caseData, quote, versions = [], materials, onClose, onSave, onOpenVersion, onNewVersion }) {
+  // 只有草稿可編輯；已送出／已簽回的版本唯讀，要修改請建立新版本
+  const readOnly = !!quote && quote.status !== 'info';
   const [items, setItems] = useState(quote?.items?.length ? quote.items : LINE_ITEMS_INIT);
   const [taxInc, setTaxInc] = useState(quote?.taxInc ?? true);
   const [addOpen, setAddOpen] = useState(false);
@@ -140,28 +142,61 @@ export function QuoteBuilder({ caseData, quote, materials, onClose, onSave }) {
     <div className="screen screen-quote" data-screen-label="Quote Builder">
       <div className="screen-header">
         <div>
-          <div className="mono-label" style={{ color: 'var(--fg-3)' }}>QUOTE BUILDER · {caseData?.id || '#NEW'}</div>
+          <div className="mono-label" style={{ color: 'var(--fg-3)' }}>
+            QUOTE BUILDER · {caseData?.id || '#NEW'} {quote?.version ? `· ${quote.version.toUpperCase()}` : ''}
+          </div>
           <h1 className="screen-title">{info.name}</h1>
         </div>
         <div className="screen-actions">
           <Button variant="ghost" onClick={onClose} icon="x">關閉</Button>
           <Button variant="solid" icon="printer" onClick={() => window.print()}>列印 / PDF</Button>
-          <Button variant="solid" icon={savedTick ? 'check' : 'save'} onClick={saveDraft}>{savedTick ? '已儲存' : '儲存草稿'}</Button>
-          <Button variant="primary" icon="send" onClick={sendQuote}>送出報價</Button>
+          {readOnly ? (
+            <Button variant="primary" icon="file-plus" onClick={() => onNewVersion(quote)}>建立新版本</Button>
+          ) : (
+            <>
+              <Button variant="solid" icon={savedTick ? 'check' : 'save'} onClick={saveDraft}>{savedTick ? '已儲存' : '儲存草稿'}</Button>
+              <Button variant="primary" icon="send" onClick={sendQuote}>送出報價</Button>
+            </>
+          )}
         </div>
       </div>
+
+      {/* 版本選擇 — 點擊切換回顧任一版本 */}
+      {versions.length > 1 && (
+        <div className="version-bar">
+          <span className="mono-label">VERSIONS · 版本</span>
+          <div className="version-chips">
+            {versions.map(v => (
+              <button
+                key={v.id}
+                className={`version-chip ${v.id === quote?.id ? 'active' : ''}`}
+                onClick={() => v.id !== quote?.id && onOpenVersion(v)}
+                title={`${v.statusLabel} · 開立 ${fmtMD(v.issuedAt)} · ${fmt(v.amount)}`}
+              >
+                <span className={`chip-dot chip-dot-${v.status}`} />
+                {v.version}
+              </button>
+            ))}
+          </div>
+          <span className="version-note">
+            {readOnly
+              ? `${quote.statusLabel}版本唯讀 — 要修改請建立新版本`
+              : '草稿可編輯'}
+          </span>
+        </div>
+      )}
 
       <div className="quote-layout">
         <div className="quote-main">
           <Panel title="案件資訊" meta="CLIENT · SCOPE">
             <div className="quote-meta-grid">
-              <Field label="業主"><Input value={info.client} onChange={setF('client')} /></Field>
+              <Field label="業主"><Input value={info.client} onChange={setF('client')} disabled={readOnly} /></Field>
               <Field label="統一編號 · GUI" error={guiInvalid ? '統編檢核未通過' : ''} helper="開立發票用，選填">
-                <Input value={info.gui} onChange={e => setInfo({ ...info, gui: e.target.value.replace(/\D/g, '').slice(0, 8) })} placeholder="8 位數字" inputMode="numeric" />
+                <Input value={info.gui} onChange={e => setInfo({ ...info, gui: e.target.value.replace(/\D/g, '').slice(0, 8) })} placeholder="8 位數字" inputMode="numeric" disabled={readOnly} />
               </Field>
-              <Field label="聯絡電話"><Input value={info.phone} onChange={setF('phone')} /></Field>
-              <Field label="工程地點"><Input value={info.location} onChange={setF('location')} /></Field>
-              <Field label="預計工期"><Input value={info.duration} onChange={setF('duration')} /></Field>
+              <Field label="聯絡電話"><Input value={info.phone} onChange={setF('phone')} disabled={readOnly} /></Field>
+              <Field label="工程地點"><Input value={info.location} onChange={setF('location')} disabled={readOnly} /></Field>
+              <Field label="預計工期"><Input value={info.duration} onChange={setF('duration')} disabled={readOnly} /></Field>
             </div>
           </Panel>
 
@@ -178,23 +213,33 @@ export function QuoteBuilder({ caseData, quote, materials, onClose, onSave }) {
                       <td>{it.name}</td>
                       <td><Chip kind={it.type === 'labor' ? 'info' : 'dim'}>{it.cat}</Chip></td>
                       <td style={{ textAlign: 'right' }}>
-                        <input className="input input-inline" type="number" value={it.qty} onChange={e => updateQty(it.id, +e.target.value)} />
+                        {readOnly
+                          ? <span className="mono">{it.qty}</span>
+                          : <input className="input input-inline" type="number" value={it.qty} onChange={e => updateQty(it.id, +e.target.value)} />}
                       </td>
                       <td className="row-sub mono">{it.unit}</td>
                       <td className="mono" style={{ textAlign: 'right' }}>{it.price.toLocaleString()}</td>
                       <td className="mono" style={{ textAlign: 'right', color: 'var(--accent)' }}>{(it.qty * it.price).toLocaleString()}</td>
-                      <td><button className="icon-btn" onClick={() => removeItem(it.id)}><Icon name="x" size={14} /></button></td>
+                      <td>
+                        {!readOnly && (
+                          <button className="icon-btn" onClick={() => removeItem(it.id)}><Icon name="x" size={14} /></button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                   {items.length === 0 && (
-                    <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--fg-3)', padding: 24 }}>尚無工項 · 點擊下方新增</td></tr>
+                    <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--fg-3)', padding: 24 }}>
+                      {readOnly ? '此版本無工項' : '尚無工項 · 點擊下方新增'}
+                    </td></tr>
                   )}
                 </tbody>
               </table>
             </div>
-            <button className="add-line" onClick={() => setAddOpen(true)}>
-              <Icon name="plus" size={14} /> 新增工項
-            </button>
+            {!readOnly && (
+              <button className="add-line" onClick={() => setAddOpen(true)}>
+                <Icon name="plus" size={14} /> 新增工項
+              </button>
+            )}
           </Panel>
         </div>
 
@@ -207,7 +252,7 @@ export function QuoteBuilder({ caseData, quote, materials, onClose, onSave }) {
               <div className="calc-total-v">{fmt(total)}</div>
             </div>
             <div className="calc-upper mono-label">{toChineseUpper(total)}</div>
-            <Toggle on={taxInc} onChange={setTaxInc} label="含營業稅" />
+            <Toggle on={taxInc} onChange={readOnly ? () => {} : setTaxInc} label="含營業稅" />
           </Panel>
           <Panel title="核准流程" meta="WORKFLOW">
             <ol className="steps">

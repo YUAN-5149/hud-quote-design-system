@@ -359,7 +359,7 @@ function ConvertModal({ quote, onClose, onConvert }) {
   );
 }
 
-export function QuotesList({ quotes = [], onNewQuote, onOpenQuote, onSign, onConvert }) {
+export function QuotesList({ quotes = [], onNewQuote, onOpenQuote, onSign, onConvert, onNewVersion }) {
   const [converting, setConverting] = useState(null);
   const monthKey = todayISO().slice(0, 7);
   const sorted = [...quotes].sort((a, b) => (b.issuedAt || '').localeCompare(a.issuedAt || ''));
@@ -410,9 +410,14 @@ export function QuotesList({ quotes = [], onNewQuote, onOpenQuote, onSign, onCon
                         </button>
                       )}
                       {(st === 'warn' || st === 'alert') && (
-                        <button className="btn btn-solid btn-sm" onClick={() => onSign(q.id)}>
-                          <Icon name="check" size={12} /><span>業主簽回</span>
-                        </button>
+                        <div style={{ display: 'inline-flex', gap: 6 }}>
+                          <button className="btn btn-solid btn-sm" onClick={() => onNewVersion(q)}>
+                            <Icon name="file-plus" size={12} /><span>新版本</span>
+                          </button>
+                          <button className="btn btn-solid btn-sm" onClick={() => onSign(q.id)}>
+                            <Icon name="check" size={12} /><span>業主簽回</span>
+                          </button>
+                        </div>
                       )}
                       {q.status === 'ok' && remaining > 0 && (
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
