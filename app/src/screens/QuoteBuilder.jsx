@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Panel, Chip, Button, Field, Input, Toggle, Icon } from '../components/Primitives.jsx';
 import { AddLineItemModal } from './Screens.jsx';
 import { LINE_ITEMS_INIT, COMPANY } from '../lib/data.js';
-import { fmt, fmtMD, toChineseUpper, validateGUI, todayYMD, todayISO, addDays } from '../lib/format.js';
+import { fmt, fmtMD, toChineseUpper, validateGUI, todayYMD, todayISO, addDays, roadName } from '../lib/format.js';
 
 // ─────────────────────────────────────────────────────────────
 // 列印版報價單 — 白底正式文件（@media print 才顯示，見 print.css）
@@ -92,21 +92,30 @@ function PrintQuote({ info, items, subtotal, tax, total, taxInc }) {
 // ─────────────────────────────────────────────────────────────
 // QUOTE BUILDER
 // ─────────────────────────────────────────────────────────────
-export function QuoteBuilder({ caseData, quote, versions = [], materials, onClose, onSave, onOpenVersion, onNewVersion }) {
+export function QuoteBuilder({ caseData, quote, versions = [], materials, newQuoteNo, onClose, onSave, onOpenVersion, onNewVersion }) {
   // 只有草稿可編輯；已送出／已簽回的版本唯讀，要修改請建立新版本
   const readOnly = !!quote && quote.status !== 'info';
+  // 案件名稱只在第一版（新報價／v1）可命名；後續版本沿用同一案件名稱
+  const canNameCase = !readOnly && (!quote || quote.version === 'v1');
+  // 使用者手動改過名稱後，就不再被工程地點自動覆蓋
+  const [nameTouched, setNameTouched] = useState(!!quote);
   const [items, setItems] = useState(quote?.items?.length ? quote.items : LINE_ITEMS_INIT);
   const [taxInc, setTaxInc] = useState(quote?.taxInc ?? true);
   const [addOpen, setAddOpen] = useState(false);
   const [savedTick, setSavedTick] = useState(false);
-  const [info, setInfo] = useState(quote?.info || {
-    quoteNo: quote?.id || `Q-${(caseData?.id || `#${todayISO().slice(0,4)}-NEW`).replace('#', '')}-A`,
-    name: quote?.case || caseData?.name || '新報價單',
-    client: quote?.client || caseData?.client || '大明建設 · 王協理',
-    gui: quote?.gui || caseData?.gui || '',
-    phone: '02-2723-xxxx',
-    location: '台北市信義區松高路 19 號 3F',
-    duration: '14 天',
+  const [info, setInfo] = useState(() => {
+    if (quote?.info) return quote.info;
+    const location = caseData?.location || '';
+    return {
+      quoteNo: quote?.id || newQuoteNo,
+      // 新報價：以工程地點的路名為預設案件名稱，可自行改寫
+      name: quote?.case || caseData?.name || roadName(location) || '',
+      client: quote?.client || caseData?.client || '',
+      gui: quote?.gui || caseData?.gui || '',
+      phone: '',
+      location,
+      duration: '14 天',
+    };
   });
   const subtotal = items.reduce((s, it) => s + it.qty * it.price, 0);
   const tax = taxInc ? Math.round(subtotal * 0.05) : 0;
@@ -120,8 +129,9 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, onClos
   // 組出報價單紀錄（保留簽回／請款進度），交給 App upsert
   const buildRecord = (status, statusLabel) => ({
     id: info.quoteNo,
-    caseId: quote?.caseId || caseData?.id || `#${todayISO().slice(0,4)}-NEW`,
-    case: info.name, client: (info.client || '').split(' · ')[0], gui: info.gui,
+    caseId: quote?.caseId || caseData?.id || null, // null → App 依案件名稱建立新案件
+    case: info.name.trim() || roadName(info.location) || '未命名案件',
+    client: (info.client || '').split(' · ')[0], gui: info.gui,
     version: quote?.version || 'v1',
     status, statusLabel,
     amount: total, taxInc, items, info,
@@ -143,9 +153,9 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, onClos
       <div className="screen-header">
         <div>
           <div className="mono-label" style={{ color: 'var(--fg-3)' }}>
-            QUOTE BUILDER · {caseData?.id || '#NEW'} {quote?.version ? `· ${quote.version.toUpperCase()}` : ''}
+            {info.quoteNo} · {caseData?.id || '新案件'} {quote?.version ? `· ${quote.version.toUpperCase()}` : ''}
           </div>
-          <h1 className="screen-title">{info.name}</h1>
+          <h1 className="screen-title">{info.name || '新報價單'}</h1>
         </div>
         <div className="screen-actions">
           <Button variant="ghost" onClick={onClose} icon="x">關閉</Button>
@@ -190,12 +200,38 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, onClos
         <div className="quote-main">
           <Panel title="案件資訊" meta="CLIENT · SCOPE">
             <div className="quote-meta-grid">
+              <Field
+                label="案件名稱 · CASE NAME"
+                helper={canNameCase ? '預設帶入工程地點的路名，可自行改寫' : '沿用第一版案件名稱'}
+              >
+                <Input
+                  value={info.name}
+                  onChange={(e) => { setNameTouched(true); setInfo({ ...info, name: e.target.value }); }}
+                  placeholder="松高路 3F 配電工程"
+                  disabled={!canNameCase}
+                />
+              </Field>
               <Field label="業主"><Input value={info.client} onChange={setF('client')} disabled={readOnly} /></Field>
               <Field label="統一編號 · GUI" error={guiInvalid ? '統編檢核未通過' : ''} helper="開立發票用，選填">
                 <Input value={info.gui} onChange={e => setInfo({ ...info, gui: e.target.value.replace(/\D/g, '').slice(0, 8) })} placeholder="8 位數字" inputMode="numeric" disabled={readOnly} />
               </Field>
               <Field label="聯絡電話"><Input value={info.phone} onChange={setF('phone')} disabled={readOnly} /></Field>
-              <Field label="工程地點"><Input value={info.location} onChange={setF('location')} disabled={readOnly} /></Field>
+              <Field label="工程地點" helper={canNameCase && !nameTouched ? '輸入地址會自動帶出路名為案件名稱' : ''}>
+                <Input
+                  value={info.location}
+                  onChange={(e) => {
+                    const location = e.target.value;
+                    // 尚未手動命名時，案件名稱跟著地址的路名走
+                    setInfo(prev => ({
+                      ...prev,
+                      location,
+                      ...(canNameCase && !nameTouched ? { name: roadName(location) } : {}),
+                    }));
+                  }}
+                  placeholder="台北市信義區松高路 19 號 3F"
+                  disabled={readOnly}
+                />
+              </Field>
               <Field label="預計工期"><Input value={info.duration} onChange={setF('duration')} disabled={readOnly} /></Field>
             </div>
           </Panel>

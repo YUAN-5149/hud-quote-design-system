@@ -52,6 +52,28 @@ export function validateGUI(gui) {
   return false;
 }
 
+// 從台灣地址擷取路名（含段別）
+// 台北市信義區松高路 19 號 3F → 松高路
+// 台北市大安區忠孝東路四段 216 巷 → 忠孝東路四段
+export const roadName = (addr = '') => {
+  // 先去掉縣市前綴（含縣轄市，如「新竹縣竹北市」），比對才不會把「市」算進路名
+  const s = addr.replace(/^\s*[一-龥]{2,3}[縣市](?:[^區\s]{2,3}市)?/, '');
+  // 路名不跨越行政區字（區鄉鎮村里）；後面須接空白／號碼／結尾，避免誤抓「沒有路名」這類敘述
+  const m = s.match(/[^縣區鄉鎮村里\s\d]{1,6}?(?:大道|路|街)(?:[一二三四五六七八九十]+段)?(?=[\s\d]|$)/);
+  return m ? m[0] : '';
+};
+
+// 報價編號：Q-YYYYMMDD-NN（開立日 + 當日流水號）
+export const nextQuoteNo = (quotes = [], dateISO) => {
+  const ymd = (dateISO || todayISO()).replace(/-/g, '');
+  const prefix = `Q-${ymd}-`;
+  const used = quotes
+    .filter(q => typeof q.id === 'string' && q.id.startsWith(prefix))
+    .map(q => parseInt(q.id.slice(prefix.length), 10) || 0);
+  const n = (used.length ? Math.max(...used) : 0) + 1;
+  return `${prefix}${String(n).padStart(2, '0')}`;
+};
+
 // ISO 日期加 n 天
 export const addDays = (dateISO, days) => {
   const d = new Date(dateISO);

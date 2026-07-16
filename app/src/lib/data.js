@@ -96,10 +96,18 @@ const quoteAmount = (items) => {
   return sub + Math.round(sub * 0.05);
 };
 
+// 報價編號 Q-YYYYMMDD-NN：開立日 + 當日流水號
+const quoteNoSeq = {};
+const seedQuoteNo = (issuedAt) => {
+  const ymd = issuedAt.replace(/-/g, '');
+  quoteNoSeq[ymd] = (quoteNoSeq[ymd] || 0) + 1;
+  return `Q-${ymd}-${String(quoteNoSeq[ymd]).padStart(2, '0')}`;
+};
+
 const mkQuote = (caseRef, version, status, issued, items, opts = {}) => {
   const c = CASES_SEED.find(x => x.name === caseRef);
   const issuedAt = monthsAgo(issued[0], issued[1]);
-  const id = `Q-${c.id.replace('#', '')}-${String.fromCharCode(64 + +version.slice(1))}`;
+  const id = seedQuoteNo(issuedAt);
   const amount = quoteAmount(items);
   return {
     id,

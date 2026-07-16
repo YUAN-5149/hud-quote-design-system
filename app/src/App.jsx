@@ -9,7 +9,7 @@ import { auth } from './lib/firebase.js';
 import { loadSession, saveSession, logoutAuth, WL_SEED } from './lib/session.js';
 import { useSyncedCollection } from './lib/store.js';
 import { CASES_SEED, INVOICES_SEED, QUOTES_SEED, MATERIALS, MOVES_SEED } from './lib/data.js';
-import { todayISO, addDays } from './lib/format.js';
+import { todayISO, addDays, nextQuoteNo } from './lib/format.js';
 
 const LABELS = {
   dashboard: 'COMMAND · 主控台',
@@ -87,11 +87,42 @@ export default function App() {
     setScreen('quote');
   };
 
+  // 案件編號：#YYYY-MMDD，同日多筆加流水後綴
+  const newCaseId = () => {
+    const d = todayISO();
+    const base = `#${d.slice(0, 4)}-${d.slice(5, 7)}${d.slice(8, 10)}`;
+    let id = base;
+    let n = 2;
+    while (cases.some(c => c.id === id)) id = `${base}-${n++}`;
+    return id;
+  };
+
   // 報價編輯器儲存（草稿或送出）— 依 id upsert
+  // 尚未歸屬案件的新報價：以報價上輸入的案件名稱順帶建立案件
   const saveQuote = (record, goToList) => {
-    setQuotes(prev => prev.some(q => q.id === record.id)
-      ? prev.map(q => q.id === record.id ? { ...q, ...record } : q)
-      : [record, ...prev]);
+    let rec = record;
+    if (!rec.caseId) {
+      const now = new Date();
+      const c = {
+        id: newCaseId(),
+        createdAt: todayISO(),
+        name: rec.case,
+        client: rec.info?.client || '—',
+        gui: rec.gui || '',
+        location: rec.info?.location || '—',
+        status: 'warn', statusLabel: '待確認',
+        amount: rec.amount,
+        updated: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
+        progress: 0,
+      };
+      setCases(prev => [c, ...prev]);
+      rec = { ...rec, caseId: c.id };
+      setSelectedCase(c);
+    }
+    setQuotes(prev => prev.some(q => q.id === rec.id)
+      ? prev.map(q => q.id === rec.id ? { ...q, ...rec } : q)
+      : [rec, ...prev]);
+    setSelectedQuote(rec); // 綁定已存檔紀錄，後續存檔才會更新同一張單
     if (goToList) setScreen('quotes');
   };
 
@@ -100,11 +131,7 @@ export default function App() {
     const sameCase = quotes.filter(q => q.caseId === quote.caseId);
     const verNum = (q) => +String(q.version || 'v1').replace('v', '') || 0;
     const nextV = sameCase.reduce((m, q) => Math.max(m, verNum(q)), 0) + 1;
-    const base = `Q-${quote.caseId.replace('#', '')}`;
-    const suffix = nextV <= 26 ? String.fromCharCode(64 + nextV) : `V${nextV}`;
-    let id = `${base}-${suffix}`;
-    let n = 2;
-    while (quotes.some(q => q.id === id)) id = `${base}-${suffix}${n++}`;
+    const id = nextQuoteNo(quotes); // 新版本＝當日新開立的一張單
 
     const rec = {
       ...quote,
@@ -168,6 +195,7 @@ export default function App() {
               .sort((a, b) => (+String(a.version || 'v1').replace('v', '')) - (+String(b.version || 'v1').replace('v', '')))
           : []}
         materials={materials}
+        newQuoteNo={nextQuoteNo(quotes)}
         onClose={() => setScreen('quotes')}
         onSave={saveQuote}
         onOpenVersion={openQuoteDoc}
