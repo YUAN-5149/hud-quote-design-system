@@ -12,7 +12,7 @@ const WL_KEY = 'hud_whitelist_v1';
 const phoneToEmail = (phone) => `${phone}@hud-quote.app`;
 
 export const WL_SEED = [
-  { phone: '0911111111', name: '系統管理員', role: '管理', addedAt: '2026-07-15', note: '預設管理帳號' },
+  { phone: '0937779487', name: '系統管理員', role: '管理', addedAt: '2026-07-15', note: '預設管理帳號' },
   { phone: '0912345678', name: '王師傅', role: '工班', addedAt: '2026-03-12', note: '北區主力' },
   { phone: '0922778899', name: '陳工頭', role: '工班', addedAt: '2026-03-15', note: '弱電施工' },
   { phone: '0933221100', name: '李業務', role: '業務', addedAt: '2026-04-02', note: '' },

@@ -140,8 +140,7 @@ export function LoginScreen({ onAuth }) {
             </div>
 
             <div className="login-hint">
-              <span className="mono-label">DEMO</span>
-              <span>測試帳號：0912345678 · 通行碼 0912345678（首次登入自動開通）。管理員：0911111111 · 通行碼 0911111111。</span>
+              <span>測試帳號：0912345678 · 通行碼 0912345678（首次登入自動開通）</span>
             </div>
           </form>
         </section>
