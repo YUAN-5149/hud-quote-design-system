@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Panel, Button, Field, Input, Chip, Icon } from '../components/Primitives.jsx';
 import { validateGUI } from '../lib/format.js';
+import { gcisPing } from '../lib/gcis.js';
+import { GuiStatus, useGuiVerify } from '../components/GuiStatus.jsx';
 
 // ─────────────────────────────────────────────────────────────
 // 設定 — 報價單抬頭（工程行自家資料）
@@ -20,8 +22,16 @@ export function SettingsScreen({ session, company, onSave }) {
 
   const edit = (patch) => { editingRef.current = true; setForm(prev => ({ ...prev, ...patch })); };
   const setF = (k) => (e) => edit({ [k]: e.target.value });
-  const dirty = ['name', 'gui', 'phone', 'address', 'bank'].some(k => (form[k] || '') !== (company[k] || ''));
+  const dirty = ['name', 'gui', 'phone', 'address', 'bank', 'gcisProxy'].some(k => (form[k] || '') !== (company[k] || ''));
   const incomplete = !form.name?.trim() || !form.gui?.trim();
+
+  // 商工登記查詢：連線測試與自家統編驗證
+  const [ping, setPing] = useState(null); // null | 'busy' | {ok} | {error}
+  const testProxy = async () => {
+    setPing('busy');
+    setPing(await gcisPing(form.gcisProxy));
+  };
+  const ownGuiVerify = useGuiVerify(form.gcisProxy || '', form.gui || '');
 
   const submit = () => {
     const e = {};
@@ -73,6 +83,7 @@ export function SettingsScreen({ session, company, onSave }) {
               inputMode="numeric"
               disabled={!canEdit}
             />
+            <GuiStatus verify={ownGuiVerify} onAdopt={canEdit ? (name) => edit({ name }) : undefined} />
           </Field>
           <Field label="聯絡電話 · PHONE">
             <Input value={form.phone || ''} onChange={setF('phone')} placeholder="02-2723-1234" disabled={!canEdit} />
@@ -101,6 +112,39 @@ export function SettingsScreen({ session, company, onSave }) {
           </div>
           <div className="settings-preview-bank">
             匯款帳戶：{form.bank || '—'}
+          </div>
+        </div>
+      </Panel>
+
+      <Panel title="商工登記查詢" meta={form.gcisProxy?.trim() ? 'GCIS · 已啟用' : 'GCIS · 未設定'}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <Field
+            label="查詢代理網址 · PROXY URL"
+            helper="經濟部商工開放平臺免費、免金鑰，但瀏覽器須經自架代理呼叫。部署方式見專案 worker/gcis-proxy.js（Cloudflare 免費方案，約 5 分鐘）"
+          >
+            <div className="field-with-btn">
+              <Input
+                value={form.gcisProxy || ''}
+                onChange={setF('gcisProxy')}
+                placeholder="https://gcis-proxy.你的帳號.workers.dev"
+                disabled={!canEdit}
+              />
+              {canEdit && (
+                <button type="button" className="btn btn-solid btn-sm" onClick={testProxy} disabled={ping === 'busy'}>
+                  <Icon name="activity" size={12} /><span>{ping === 'busy' ? '測試中…' : '測試連線'}</span>
+                </button>
+              )}
+            </div>
+            {ping && ping !== 'busy' && (
+              <div className="gui-status" style={{ color: ping.ok ? 'var(--ok)' : 'var(--alert)' }}>
+                <span className="mono-label" style={{ color: 'inherit' }}>
+                  {ping.ok ? '✓ 代理連線正常' : `✗ ${ping.error}`}
+                </span>
+              </div>
+            )}
+          </Field>
+          <div className="mono-label" style={{ color: 'var(--fg-3)' }}>
+            啟用後：報價單統編自動查證登記狀態與名稱、業主欄可用名稱查統編。資料來源：經濟部商工行政資料開放平臺（每小時更新）。
           </div>
         </div>
       </Panel>

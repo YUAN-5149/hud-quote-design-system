@@ -4,6 +4,35 @@
 
 .wl-session-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
+/* ── 統編查驗（商工登記）─────────────────────────────────── */
+.field-with-btn { display: flex; gap: 8px; align-items: center; }
+.field-with-btn .input { flex: 1; min-width: 0; }
+.field-with-btn .btn { flex-shrink: 0; white-space: nowrap; }
+.gui-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.gui-status-name {
+  font-family: var(--font-tc);
+  font-size: 12px;
+  color: var(--fg-1);
+}
+.gui-adopt {
+  background: transparent;
+  border: 1px solid var(--line-active);
+  color: var(--accent);
+  font-family: var(--font-tc);
+  font-size: 11px;
+  padding: 2px 10px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.gui-adopt:hover { background: var(--accent-tint); }
+
 /* ── 設定頁 ───────────────────────────────────────────────── */
 .settings-preview {
   background: #fff;

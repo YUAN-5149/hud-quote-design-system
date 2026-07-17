@@ -201,4 +201,5 @@ export const COMPANY_SEED = [{
   phone: '',
   address: '',
   bank: '',
+  gcisProxy: '', // 商工登記查詢代理網址（Cloudflare Worker），空值＝功能停用
 }];

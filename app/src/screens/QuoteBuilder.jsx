@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Panel, Chip, Button, Field, Input, Toggle, Icon } from '../components/Primitives.jsx';
+import { Panel, Chip, Button, Field, Input, Toggle, Modal, Icon } from '../components/Primitives.jsx';
+import { GuiStatus, useGuiVerify } from '../components/GuiStatus.jsx';
+import { gcisSearchCompany } from '../lib/gcis.js';
 import { AddLineItemModal } from './Screens.jsx';
 import { LINE_ITEMS_INIT } from '../lib/data.js';
 import { fmt, fmtMD, toChineseUpper, validateGUI, todayYMD, todayISO, addDays, roadName } from '../lib/format.js';
@@ -90,6 +92,59 @@ function PrintQuote({ info, items, subtotal, tax, total, taxInc, company }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// 業主名稱查統編（商工登記；官方 API 僅支援公司，行號請直接輸入統編）
+// ─────────────────────────────────────────────────────────────
+function GuiSearchModal({ proxy, initial, onClose, onPick }) {
+  const [kw, setKw] = useState(initial || '');
+  const [busy, setBusy] = useState(false);
+  const [rows, setRows] = useState(null);
+  const [err, setErr] = useState('');
+
+  const search = async (e) => {
+    e && e.preventDefault();
+    setErr(''); setBusy(true); setRows(null);
+    const r = await gcisSearchCompany(proxy, kw);
+    setBusy(false);
+    if (r.error) return setErr(r.error);
+    if (r.off) return setErr('尚未設定商工登記查詢代理（設定頁）');
+    setRows(r.results);
+  };
+
+  return (
+    <Modal
+      open onClose={onClose}
+      title="名稱查統編 · GCIS" meta="公司登記" width={620}
+    >
+      <form onSubmit={search} className="searchbar" style={{ marginBottom: 12 }}>
+        <Icon name="search" size={14} />
+        <input value={kw} onChange={e => setKw(e.target.value)} placeholder="公司名稱關鍵字（至少 2 字）" autoFocus />
+        <Button variant="primary" onClick={search} disabled={busy}>{busy ? '查詢中…' : '查詢'}</Button>
+      </form>
+      {err && <div className="mono-label" style={{ color: 'var(--warn)', marginBottom: 8 }}>{err}</div>}
+      {rows && (
+        <div className="pick-list">
+          {rows.map(r => (
+            <button key={r.gui} className="pick-row" onClick={() => { onPick(r); onClose(); }}>
+              <span className="mono" style={{ color: 'var(--accent)', width: 96 }}>{r.gui}</span>
+              <span style={{ flex: 1, color: 'var(--fg-1)' }}>{r.name}</span>
+              <Chip kind={(r.status || '').includes('核准') ? 'ok' : 'warn'}>{r.status || '—'}</Chip>
+            </button>
+          ))}
+          {rows.length === 0 && (
+            <div style={{ padding: 20, textAlign: 'center', color: 'var(--fg-3)' }}>
+              查無符合的公司 — 行號（商號）不支援名稱查詢，請直接輸入統編驗證
+            </div>
+          )}
+        </div>
+      )}
+      <div className="mono-label" style={{ marginTop: 12, color: 'var(--fg-3)' }}>
+        資料來源：經濟部商工行政資料開放平臺
+      </div>
+    </Modal>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // QUOTE BUILDER
 // ─────────────────────────────────────────────────────────────
 export function QuoteBuilder({ caseData, quote, versions = [], materials, company = {}, newQuoteNo, onClose, onSave, onOpenVersion, onNewVersion }) {
@@ -102,6 +157,7 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
   const [items, setItems] = useState(quote?.items?.length ? quote.items : LINE_ITEMS_INIT);
   const [taxInc, setTaxInc] = useState(quote?.taxInc ?? true);
   const [addOpen, setAddOpen] = useState(false);
+  const [guiSearchOpen, setGuiSearchOpen] = useState(false);
   const [savedTick, setSavedTick] = useState(false);
   const [info, setInfo] = useState(() => {
     if (quote?.info) return quote.info;
@@ -121,6 +177,8 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
   const tax = taxInc ? Math.round(subtotal * 0.05) : 0;
   const total = subtotal + tax;
   const guiInvalid = info.gui && !validateGUI(info.gui);
+  // 統編通過檢核碼後即時查商工登記（唯讀版本不查）
+  const guiVerify = useGuiVerify(readOnly ? '' : (company.gcisProxy || ''), info.gui);
   const updateQty = (id, qty) => setItems(items.map(it => it.id === id ? { ...it, qty: Math.max(0, qty) } : it));
   const removeItem = (id) => setItems(items.filter(it => it.id !== id));
   const addItem = (it) => setItems(prev => [...prev, it]);
@@ -211,9 +269,19 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
                   disabled={!canNameCase}
                 />
               </Field>
-              <Field label="業主"><Input value={info.client} onChange={setF('client')} disabled={readOnly} /></Field>
-              <Field label="統一編號 · GUI" error={guiInvalid ? '統編檢核未通過' : ''} helper="開立發票用，選填">
+              <Field label="業主">
+                <div className="field-with-btn">
+                  <Input value={info.client} onChange={setF('client')} disabled={readOnly} />
+                  {!readOnly && !!(company.gcisProxy || '').trim() && (
+                    <button type="button" className="btn btn-solid btn-sm" title="以名稱查統編（商工登記）" onClick={() => setGuiSearchOpen(true)}>
+                      <Icon name="search" size={12} /><span>查統編</span>
+                    </button>
+                  )}
+                </div>
+              </Field>
+              <Field label="統一編號 · GUI" error={guiInvalid ? '統編檢核未通過' : ''} helper={guiVerify.state === 'idle' || guiVerify.state === 'off' ? '開立發票用，選填' : ''}>
                 <Input value={info.gui} onChange={e => setInfo({ ...info, gui: e.target.value.replace(/\D/g, '').slice(0, 8) })} placeholder="8 位數字" inputMode="numeric" disabled={readOnly} />
+                <GuiStatus verify={guiVerify} onAdopt={(name) => setInfo(prev => ({ ...prev, client: name }))} />
               </Field>
               <Field label="聯絡電話"><Input value={info.phone} onChange={setF('phone')} disabled={readOnly} /></Field>
               <Field label="工程地點" helper={canNameCase && !nameTouched ? '輸入地址會自動帶出路名為案件名稱' : ''}>
@@ -302,6 +370,14 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
       </div>
 
       <AddLineItemModal open={addOpen} onClose={() => setAddOpen(false)} onAdd={addItem} materials={materials} />
+      {guiSearchOpen && (
+        <GuiSearchModal
+          proxy={company.gcisProxy || ''}
+          initial={(info.client || '').split(' · ')[0]}
+          onClose={() => setGuiSearchOpen(false)}
+          onPick={(r) => setInfo(prev => ({ ...prev, client: r.name, gui: r.gui }))}
+        />
+      )}
       <PrintQuote info={info} items={items} subtotal={subtotal} tax={tax} total={total} taxInc={taxInc} company={company} />
     </div>
   );
