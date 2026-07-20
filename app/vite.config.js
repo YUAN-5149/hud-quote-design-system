@@ -50,6 +50,8 @@ export default defineConfig({
     }),
   ],
   base: './',
+  // main.jsx 匯入 repo 根目錄的 colors_and_type.css 與 ui_kits/ 的 app.css
+  server: { fs: { allow: ['..'] } },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_DATE__: JSON.stringify(buildDate),
