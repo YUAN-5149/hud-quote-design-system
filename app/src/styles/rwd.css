@@ -33,6 +33,55 @@
 }
 .gui-adopt:hover { background: var(--accent-tint); }
 
+/* ── 介面配色選擇 ─────────────────────────────────────────── */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+}
+.theme-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-panel-2);
+  border: 1px solid var(--line-faint);
+  cursor: pointer;
+  text-align: left;
+  transition: all 200ms var(--ease-out);
+}
+.theme-card:hover { border-color: var(--line-active); }
+.theme-card.active {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+.theme-swatch {
+  display: flex;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line-base);
+  overflow: hidden;
+}
+.theme-swatch span { flex: 1; }
+.theme-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.theme-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-tc);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg-1);
+}
+.theme-check { color: var(--accent); }
+.theme-desc {
+  font-family: var(--font-tc);
+  font-size: 11px;
+  color: var(--fg-3);
+  line-height: 1.5;
+}
+
 /* ── 設定頁 ───────────────────────────────────────────────── */
 .settings-preview {
   background: #fff;

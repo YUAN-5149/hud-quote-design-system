@@ -1,0 +1,205 @@
+/* ============================================================
+   介面配色主題 — 覆寫 tokens.css 的色彩變數
+   元件一律使用變數，故切換主題不需改動任何元件程式碼。
+   套用方式：<html data-theme="...">（見 lib/theme.js）
+   ============================================================ */
+
+/* 主題切換過場（僅色彩，不影響版面效能） */
+html { transition: background-color 200ms ease; }
+body, .hud-panel, .rail, .topbar, .statusbar, .input, .btn, .data-table td, .data-table th {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+/* ── ① 高對比黑白 · 工地陽光下最清楚 ─────────────────────── */
+[data-theme='contrast'] {
+  --bg-void:      #000000;
+  --bg-base:      #000000;
+  --bg-panel:     #0A0A0A;
+  --bg-panel-2:   #161616;
+  --bg-input:     #000000;
+  --bg-overlay:   rgba(0, 0, 0, 0.88);
+
+  --line-faint:   rgba(255, 255, 255, 0.28);
+  --line-base:    rgba(255, 255, 255, 0.48);
+  --line-strong:  rgba(255, 255, 255, 0.75);
+  --line-active:  #FFFFFF;
+  --line-grid:    rgba(255, 255, 255, 0.06);
+
+  --fg-1:         #FFFFFF;
+  --fg-2:         #EDEDED;
+  --fg-3:         #C4C4C4;
+  --fg-4:         #8A8A8A;
+  --fg-on-accent: #000000;
+
+  --accent:       #FFFFFF;
+  --accent-hi:    #FFFFFF;
+  --accent-lo:    #C4C4C4;
+  --accent-glow:  rgba(255, 255, 255, 0.35);
+  --accent-tint:  rgba(255, 255, 255, 0.14);
+
+  /* 狀態色保留辨識度，但提高亮度以符合高對比 */
+  --warn:         #FFD54A;
+  --warn-glow:    rgba(255, 213, 74, 0.4);
+  --warn-tint:    rgba(255, 213, 74, 0.16);
+  --alert:        #FF6B6B;
+  --alert-glow:   rgba(255, 107, 107, 0.4);
+  --alert-tint:   rgba(255, 107, 107, 0.16);
+  --ok:           #5CFF9D;
+  --ok-glow:      rgba(92, 255, 157, 0.35);
+  --ok-tint:      rgba(92, 255, 157, 0.16);
+  --info:         #9BB4FF;
+  --info-tint:    rgba(155, 180, 255, 0.16);
+}
+
+/* ── ② 明亮白藍 · 室內辦公、列印前對照 ──────────────────── */
+[data-theme='light'] {
+  --bg-void:      #E8EDF5;
+  --bg-base:      #F4F7FC;
+  --bg-panel:     #FFFFFF;
+  --bg-panel-2:   #EEF3FA;
+  --bg-input:     #FFFFFF;
+  --bg-overlay:   rgba(244, 247, 252, 0.82);
+
+  --line-faint:   rgba(21, 78, 148, 0.14);
+  --line-base:    rgba(21, 78, 148, 0.24);
+  --line-strong:  rgba(21, 78, 148, 0.42);
+  --line-active:  rgba(21, 100, 200, 0.70);
+  --line-grid:    rgba(21, 78, 148, 0.05);
+
+  --fg-1:         #0B1B33;
+  --fg-2:         #2C4462;
+  --fg-3:         #5A7091;
+  --fg-4:         #9BAAC2;
+  --fg-on-accent: #FFFFFF;
+
+  --accent:       #0B62D6;
+  --accent-hi:    #2F86F5;
+  --accent-lo:    #084BA5;
+  --accent-glow:  rgba(11, 98, 214, 0.28);
+  --accent-tint:  rgba(11, 98, 214, 0.08);
+
+  --warn:         #B36A00;
+  --warn-glow:    rgba(179, 106, 0, 0.25);
+  --warn-tint:    rgba(179, 106, 0, 0.10);
+  --alert:        #C62230;
+  --alert-glow:   rgba(198, 34, 48, 0.25);
+  --alert-tint:   rgba(198, 34, 48, 0.09);
+  --ok:           #0A8043;
+  --ok-glow:      rgba(10, 128, 67, 0.25);
+  --ok-tint:      rgba(10, 128, 67, 0.10);
+  --info:         #3355CC;
+  --info-tint:    rgba(51, 85, 204, 0.10);
+}
+
+/* ── ③ 暖琥珀夜間 · 夜間收工對帳，降低藍光 ──────────────── */
+[data-theme='amber'] {
+  --bg-void:      #0B0703;
+  --bg-base:      #120C05;
+  --bg-panel:     #1B1309;
+  --bg-panel-2:   #241A0D;
+  --bg-input:     #0F0A04;
+  --bg-overlay:   rgba(18, 12, 5, 0.78);
+
+  --line-faint:   rgba(255, 176, 60, 0.12);
+  --line-base:    rgba(255, 176, 60, 0.22);
+  --line-strong:  rgba(255, 176, 60, 0.38);
+  --line-active:  rgba(255, 176, 60, 0.65);
+  --line-grid:    rgba(255, 176, 60, 0.05);
+
+  --fg-1:         #FFE9C7;
+  --fg-2:         #D8BC93;
+  --fg-3:         #A88E6B;
+  --fg-4:         #6B583C;
+  --fg-on-accent: #1A1004;
+
+  --accent:       #FFAE3C;
+  --accent-hi:    #FFC876;
+  --accent-lo:    #C4801F;
+  --accent-glow:  rgba(255, 174, 60, 0.45);
+  --accent-tint:  rgba(255, 174, 60, 0.10);
+
+  --warn:         #FFD166;
+  --warn-glow:    rgba(255, 209, 102, 0.4);
+  --warn-tint:    rgba(255, 209, 102, 0.10);
+  --alert:        #FF6F59;
+  --alert-glow:   rgba(255, 111, 89, 0.4);
+  --alert-tint:   rgba(255, 111, 89, 0.10);
+  --ok:           #B8D96B;
+  --ok-glow:      rgba(184, 217, 107, 0.35);
+  --ok-tint:      rgba(184, 217, 107, 0.10);
+  --info:         #E0A96D;
+  --info-tint:    rgba(224, 169, 109, 0.10);
+}
+
+/* ── ④ 紙感米白 · 長時間閱讀報價明細不刺眼 ──────────────── */
+[data-theme='paper'] {
+  --bg-void:      #E5DFD2;
+  --bg-base:      #F2EDE1;
+  --bg-panel:     #FBF8F0;
+  --bg-panel-2:   #EFE9DC;
+  --bg-input:     #FFFDF8;
+  --bg-overlay:   rgba(242, 237, 225, 0.85);
+
+  --line-faint:   rgba(90, 74, 51, 0.14);
+  --line-base:    rgba(90, 74, 51, 0.24);
+  --line-strong:  rgba(90, 74, 51, 0.40);
+  --line-active:  rgba(140, 88, 30, 0.65);
+  --line-grid:    rgba(90, 74, 51, 0.05);
+
+  --fg-1:         #2B2318;
+  --fg-2:         #4A3D2C;
+  --fg-3:         #766549;
+  --fg-4:         #A8977C;
+  --fg-on-accent: #FFFDF8;
+
+  --accent:       #8C581E;
+  --accent-hi:    #B0733A;
+  --accent-lo:    #6B4214;
+  --accent-glow:  rgba(140, 88, 30, 0.25);
+  --accent-tint:  rgba(140, 88, 30, 0.08);
+
+  --warn:         #9A6A00;
+  --warn-glow:    rgba(154, 106, 0, 0.22);
+  --warn-tint:    rgba(154, 106, 0, 0.10);
+  --alert:        #A82A22;
+  --alert-glow:   rgba(168, 42, 34, 0.22);
+  --alert-tint:   rgba(168, 42, 34, 0.09);
+  --ok:           #3F6B32;
+  --ok-glow:      rgba(63, 107, 50, 0.22);
+  --ok-tint:      rgba(63, 107, 50, 0.10);
+  --info:         #4A5F8A;
+  --info-tint:    rgba(74, 95, 138, 0.10);
+}
+
+/* 淺色主題：移除為深底設計的發光與掃描線效果，避免顯得髒 */
+[data-theme='light'] body::before,
+[data-theme='light'] body::after,
+[data-theme='paper'] body::before,
+[data-theme='paper'] body::after {
+  opacity: 0.35;
+}
+[data-theme='light'] .metric-value.accent,
+[data-theme='paper'] .metric-value.accent,
+[data-theme='light'] .step-active .step-mark,
+[data-theme='paper'] .step-active .step-mark {
+  text-shadow: none;
+}
+[data-theme='light'] .btn-primary,
+[data-theme='paper'] .btn-primary {
+  box-shadow: none;
+}
+[data-theme='light'] .tele-fill,
+[data-theme='paper'] .tele-fill,
+[data-theme='light'] .dist-fill,
+[data-theme='paper'] .dist-fill,
+[data-theme='light'] .bar-rev,
+[data-theme='paper'] .bar-rev {
+  box-shadow: none;
+}
+[data-theme='light'] .rail,
+[data-theme='paper'] .rail {
+  background: var(--bg-panel);
+}
+[data-theme='contrast'] .rail {
+  background: #000000;
+}

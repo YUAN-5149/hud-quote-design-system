@@ -2,13 +2,41 @@ import { useState, useEffect, useRef } from 'react';
 import { Panel, Button, Field, Input, Chip, Icon } from '../components/Primitives.jsx';
 import { validateGUI } from '../lib/format.js';
 import { gcisPing } from '../lib/gcis.js';
+import { THEMES } from '../lib/theme.js';
 import { GuiStatus, useGuiVerify } from '../components/GuiStatus.jsx';
 
 // ─────────────────────────────────────────────────────────────
 // 設定 — 報價單抬頭（工程行自家資料）
 // 管理員可編輯；其他成員唯讀
 // ─────────────────────────────────────────────────────────────
-export function SettingsScreen({ session, company, onSave }) {
+// 介面配色選擇 — 每台裝置各自記憶
+function ThemePicker({ theme, setTheme }) {
+  return (
+    <div className="theme-grid">
+      {THEMES.map(t => (
+        <button
+          key={t.id}
+          className={`theme-card ${theme === t.id ? 'active' : ''}`}
+          onClick={() => setTheme(t.id)}
+          aria-pressed={theme === t.id}
+        >
+          <span className="theme-swatch">
+            {t.swatch.map((c, i) => <span key={i} style={{ background: c }} />)}
+          </span>
+          <span className="theme-info">
+            <span className="theme-name">
+              {t.name}
+              {theme === t.id && <span className="theme-check">✓</span>}
+            </span>
+            <span className="theme-desc">{t.desc}</span>
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function SettingsScreen({ session, company, onSave, theme, setTheme }) {
   const canEdit = !!session?.isAdmin;
   const [form, setForm] = useState(company);
   const [err, setErr] = useState({});
@@ -69,6 +97,13 @@ export function SettingsScreen({ session, company, onSave }) {
           </span>
         </div>
       )}
+
+      <Panel title="介面配色" meta="APPEARANCE · 本裝置">
+        <ThemePicker theme={theme} setTheme={setTheme} />
+        <div className="mono-label" style={{ color: 'var(--fg-3)', marginTop: 14 }}>
+          選擇後立即套用並記住，僅影響這台裝置 — 工地手機可用高對比、辦公室桌機用明亮配色。
+        </div>
+      </Panel>
 
       <Panel title="報價單抬頭" meta={canEdit ? 'COMPANY · 可編輯' : 'COMPANY · READ-ONLY'} accent>
         <div className="quote-meta-grid">

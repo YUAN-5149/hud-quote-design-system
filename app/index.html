@@ -11,6 +11,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
+<script>
+  // 在畫面繪製前套用記憶的主題，避免重新整理時閃現預設配色
+  try {
+    var t = localStorage.getItem('hud_theme_v1');
+    if (t && t !== 'hud' && ['contrast', 'light', 'amber', 'paper'].indexOf(t) >= 0) {
+      document.documentElement.setAttribute('data-theme', t);
+    }
+  } catch (e) {}
+</script>
 <div id="root"></div>
 <script type="module" src="/src/main.jsx"></script>
 </body>

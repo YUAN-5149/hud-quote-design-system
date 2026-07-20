@@ -10,6 +10,7 @@ import { loadSession, saveSession, logoutAuth, WL_SEED } from './lib/session.js'
 import { useSyncedCollection } from './lib/store.js';
 import { CASES_SEED, INVOICES_SEED, QUOTES_SEED, MATERIALS, MOVES_SEED, COMPANY_SEED } from './lib/data.js';
 import { SettingsScreen } from './screens/Settings.jsx';
+import { useTheme } from './lib/theme.js';
 import { todayISO, addDays, nextQuoteNo } from './lib/format.js';
 
 const LABELS = {
@@ -26,6 +27,7 @@ const LABELS = {
 
 export default function App() {
   const [session, setSession] = useState(() => loadSession());
+  const [theme, setTheme] = useTheme(); // 介面配色（本機記憶，登入前後皆套用）
   const [screen, setScreen] = useState(() => localStorage.getItem('scr') || 'dashboard');
   const [selectedCase, setSelectedCase] = useState(null);
   // Firebase Auth 狀態 — 資料同步僅在登入後啟動（安全規則要求）
@@ -286,7 +288,7 @@ export default function App() {
       case 'billing': return <BillingScreen cases={cases} invoices={invoices} setInvoices={setInvoices} onDelete={deleteInvoice} company={company} />;
       case 'reports': return <ReportsScreen cases={cases} invoices={invoices} />;
       case 'whitelist': return <WhitelistScreen session={session} onLogout={logout} list={whitelist} setList={setWhitelist} />;
-      case 'settings': return <SettingsScreen session={session} company={company} onSave={saveCompany} />;
+      case 'settings': return <SettingsScreen session={session} company={company} onSave={saveCompany} theme={theme} setTheme={setTheme} />;
       default: return null;
     }
   };
