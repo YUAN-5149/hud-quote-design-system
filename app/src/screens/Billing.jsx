@@ -24,7 +24,8 @@ function NewInvoiceModal({ open, onClose, onCreate, cases, company = {} }) {
 
   const submit = () => {
     const c = cases.find(x => x.id === caseId);
-    if (!c || !+amount || guiInvalid) return;
+    // 統編為選填，查驗結果僅作提示，不阻擋開立（個人業主本來就沒有統編）
+    if (!c || !+amount) return;
     onCreate({
       id: `B-${c.id.replace('#','')}-${Date.now() % 10}`,
       caseId: c.id, case: c.name, client: client.trim() || '—', gui: gui.trim(),
@@ -55,9 +56,9 @@ function NewInvoiceModal({ open, onClose, onCreate, cases, company = {} }) {
           <Input value={client} onChange={e => setClient(e.target.value)} placeholder="開立發票抬頭" />
         </Field>
         <Field
-          label="統一編號 · GUI"
-          error={guiInvalid ? '統編檢核未通過' : ''}
-          helper={guiVerify.state === 'idle' || guiVerify.state === 'off' ? '開立發票用，預設帶入案件統編' : ''}
+          label="統一編號 · GUI（選填）"
+          error={guiInvalid ? '統編檢核未通過 — 仍可開立，請確認是否正確' : ''}
+          helper={guiVerify.state === 'idle' || guiVerify.state === 'off' ? '開立發票用，預設帶入案件統編；個人業主可留空' : ''}
         >
           <Input
             value={gui}

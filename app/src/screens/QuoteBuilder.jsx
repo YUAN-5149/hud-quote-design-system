@@ -279,7 +279,7 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
                   )}
                 </div>
               </Field>
-              <Field label="統一編號 · GUI" error={guiInvalid ? '統編檢核未通過' : ''} helper={guiVerify.state === 'idle' || guiVerify.state === 'off' ? '開立發票用，選填' : ''}>
+              <Field label="統一編號 · GUI（選填）" error={guiInvalid ? '統編檢核未通過 — 請確認是否正確' : ''} helper={guiVerify.state === 'idle' || guiVerify.state === 'off' ? '開立發票用；個人業主可留空' : ''}>
                 <Input value={info.gui} onChange={e => setInfo({ ...info, gui: e.target.value.replace(/\D/g, '').slice(0, 8) })} placeholder="8 位數字" inputMode="numeric" disabled={readOnly} />
                 <GuiStatus verify={guiVerify} onAdopt={(name) => setInfo(prev => ({ ...prev, client: name }))} />
               </Field>
