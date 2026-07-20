@@ -37,6 +37,26 @@ npm run dev     # http://localhost:5173
 npm run build   # 打包到 app/dist
 ```
 
+### 成員開通 (Provisioning)
+
+帳號**一律由管理員在 Firebase Console 建立**，前端沒有自動開通的路徑。
+`createUserWithEmailAndPassword` 是客戶端 API — 若開放給前端呼叫，任何人都能為
+白名單上「尚未建立」的號碼自行設定密碼並登入。
+
+新增一位成員：
+
+1. Firebase Console → Authentication → Users → Add user
+   - Email：`<手機號>@hud-quote.app`（例如 `0912345678@hud-quote.app`）
+   - Password：初始通行碼（至少 6 字元），另行口頭或私訊告知本人
+2. 登入後在「白名單」畫面補上姓名與角色；或首次建置時直接在
+   Firestore Console 的 `whitelist` 集合建立文件（doc ID = 手機號，
+   欄位 `phone` / `name` / `role`，`role` 為 `管理` 者具管理權限）
+3. 請該成員登入後自行到「設定」修改通行碼
+
+白名單為授權來源：從白名單移除即失去所有資料存取權（Firestore 規則的
+`isMember()` 會擋掉），但**該 Firebase Auth 帳號仍然存在** — 人員離職時請
+一併到 Console 停用或刪除帳號。
+
 推送到 `master` 會自動觸發 GitHub Actions 部署 GitHub Pages（見 `.github/workflows/deploy.yml`）。
 
 ---

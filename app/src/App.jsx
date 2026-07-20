@@ -6,7 +6,7 @@ import { BillingScreen } from './screens/Billing.jsx';
 import { LoginScreen, WhitelistScreen } from './auth/Auth.jsx';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './lib/firebase.js';
-import { loadSession, saveSession, logoutAuth, WL_SEED } from './lib/session.js';
+import { loadSession, saveSession, logoutAuth } from './lib/session.js';
 import { useSyncedCollection } from './lib/store.js';
 import { CASES_SEED, INVOICES_SEED, QUOTES_SEED, MATERIALS, MOVES_SEED, COMPANY_SEED } from './lib/data.js';
 import { SettingsScreen } from './screens/Settings.jsx';
@@ -50,7 +50,9 @@ export default function App() {
   const [quotes, setQuotes] = useSyncedCollection('quotes', QUOTES_SEED, 'id', authed);
   const [materials, setMaterials] = useSyncedCollection('materials', MATERIALS, 'code', authed);
   const [moves, setMoves] = useSyncedCollection('moves', MOVES_SEED, 'id', authed);
-  const [whitelist, setWhitelist] = useSyncedCollection('whitelist', WL_SEED, 'phone', authed);
+  // 白名單不帶種子 — 它是授權來源，第一筆由管理員在 Firebase Console 建立。
+  // 若讓前端自動種入，等於任何人都能決定誰是管理員。
+  const [whitelist, setWhitelist] = useSyncedCollection('whitelist', [], 'phone', authed);
   const [settings, setSettings] = useSyncedCollection('settings', COMPANY_SEED, 'id', authed);
   const [selectedQuote, setSelectedQuote] = useState(null);
 

@@ -210,7 +210,7 @@ export function LoginScreen({ onAuth }) {
             </div>
 
             <div className="login-hint">
-              <span>測試帳號：0912345678 · 通行碼 0912345678（首次登入自動開通）</span>
+              <span>初次使用請向管理員索取通行碼</span>
             </div>
           </form>
         </section>
