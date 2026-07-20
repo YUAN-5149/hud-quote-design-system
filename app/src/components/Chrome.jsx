@@ -15,7 +15,7 @@ export const RAIL_ITEMS = [
   { id: 'settings', icon: 'settings', label: '設定' },
 ];
 
-export function Rail({ active, onNav, session, onLogout }) {
+export function Rail({ active, onNav, onLogout }) {
   return (
     <aside className="rail">
       <div className="rail-logo">

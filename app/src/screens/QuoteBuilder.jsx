@@ -6,6 +6,7 @@ import { gcisSearchCompany } from '../lib/gcis.js';
 import { AddLineItemModal } from './Screens.jsx';
 import { LINE_ITEMS_INIT } from '../lib/data.js';
 import { fmt, fmtMD, toChineseUpper, validateGUI, todayYMD, todayISO, addDays, roadName } from '../lib/format.js';
+import { quoteTotals } from '../lib/calc.js';
 
 // ─────────────────────────────────────────────────────────────
 // 列印版報價單 — 白底正式文件（@media print 才顯示，見 print.css）
@@ -101,7 +102,7 @@ function GuiSearchModal({ proxy, initial, onClose, onPick }) {
   const [err, setErr] = useState('');
 
   const search = async (e) => {
-    e && e.preventDefault();
+    if (e) e.preventDefault();
     setErr(''); setBusy(true); setRows(null);
     const r = await gcisSearchCompany(proxy, kw);
     setBusy(false);
@@ -173,9 +174,7 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
       duration: '14 天',
     };
   });
-  const subtotal = items.reduce((s, it) => s + it.qty * it.price, 0);
-  const tax = taxInc ? Math.round(subtotal * 0.05) : 0;
-  const total = subtotal + tax;
+  const { subtotal, tax, total } = quoteTotals(items, taxInc);
   const guiInvalid = info.gui && !validateGUI(info.gui);
   // 統編通過檢核碼後即時查商工登記（唯讀版本不查）
   const guiVerify = useGuiVerify(readOnly ? '' : (company.gcisProxy || ''), info.gui);

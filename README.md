@@ -35,6 +35,8 @@ cd app
 npm install
 npm run dev     # http://localhost:5173
 npm run build   # 打包到 app/dist
+npm test        # 單元測試（金額計算、大寫金額、統編檢核）
+npm run lint    # oxlint
 ```
 
 ### 成員開通 (Provisioning)

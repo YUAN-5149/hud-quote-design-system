@@ -14,7 +14,7 @@ function PasscodeModal({ session, onClose }) {
   const [done, setDone] = useState(false);
 
   const submit = async (e) => {
-    e && e.preventDefault();
+    if (e) e.preventDefault();
     setErr('');
     if (!cur || !next) return setErr('請填寫現行通行碼與新通行碼');
     if (next !== confirm) return setErr('兩次輸入的新通行碼不一致');
@@ -83,7 +83,7 @@ export function LoginScreen({ onAuth }) {
   const [stage, setStage] = useState('idle'); // idle | verifying | granted | denied
 
   const tryLogin = async (e) => {
-    e && e.preventDefault();
+    if (e) e.preventDefault();
     setErr('');
     if (!phone.trim() || !pass.trim()) {
       setErr('請輸入手機號碼與通行碼');

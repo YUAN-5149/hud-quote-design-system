@@ -11,6 +11,7 @@ export function toChineseUpper(n) {
   if (n === 0) return '新台幣零元整';
   let out = '';
   let gi = 0;
+  let prevSeg = null; // 上一節（較低位）的值，用來判斷節與節之間要不要補零
   while (n > 0) {
     const seg = n % 10000;
     if (seg > 0) {
@@ -27,10 +28,15 @@ export function toChineseUpper(n) {
         }
         s = Math.floor(s / 10);
       }
+      // 較低節不滿四位數時，節與節之間要補零：壹萬零伍，不是壹萬伍
+      if (prevSeg > 0 && prevSeg < 1000 && !out.startsWith(DIGITS[0])) {
+        out = DIGITS[0] + out;
+      }
       out = segStr + GROUPS[gi] + out;
     } else if (out && !out.startsWith(DIGITS[0])) {
       out = DIGITS[0] + out;
     }
+    prevSeg = seg;
     n = Math.floor(n / 10000);
     gi++;
   }

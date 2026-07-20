@@ -297,7 +297,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <Rail active={screen === 'quote' ? 'quotes' : screen} onNav={setScreen} session={session} onLogout={logout} />
+      <Rail active={screen === 'quote' ? 'quotes' : screen} onNav={setScreen} onLogout={logout} />
       <TopBar screenLabel={LABELS[screen]} session={session} onLogout={logout} />
       <main className="main">{content()}</main>
       <StatusBar session={session} />

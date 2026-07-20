@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "plugins": ["react", "import"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    // `//` 是本設計系統的行內分隔符號（見 SKILL.md），不是註解
+    "react/jsx-no-comment-textnodes": "off",
+    "import/no-unassigned-import": "off",
+    "no-underscore-dangle": "off",
+    "no-unused-vars": ["error", { "caughtErrors": "none", "argsIgnorePattern": "^_" }]
+  },
+  "ignorePatterns": ["dist/**", "dev-dist/**"]
+}

@@ -64,7 +64,7 @@ export function useSyncedCollection(name, seed, keyField, enabled = true) {
         console.warn(`Firestore 同步失敗 (${name})，使用本機資料`, e);
       }
     })();
-    return () => { cancelled = true; ready.current = false; unsub && unsub(); };
+    return () => { cancelled = true; ready.current = false; if (unsub) unsub(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name, enabled]);
 
