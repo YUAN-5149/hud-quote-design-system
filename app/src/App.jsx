@@ -283,7 +283,7 @@ export default function App() {
       />;
       case 'quotes': return <QuotesList quotes={quotes} onNewQuote={openNewQuote} onOpenQuote={openQuoteDoc} onSign={signQuote} onConvert={convertQuote} onNewVersion={newQuoteVersion} onDelete={deleteQuote} />;
       case 'materials': return <MaterialsScreen materials={materials} cases={cases} moves={moves} onAdd={(m) => setMaterials(prev => [m, ...prev])} onUpdate={updateMaterial} onDelete={deleteMaterial} onMove={addMovement} />;
-      case 'billing': return <BillingScreen cases={cases} invoices={invoices} setInvoices={setInvoices} onDelete={deleteInvoice} />;
+      case 'billing': return <BillingScreen cases={cases} invoices={invoices} setInvoices={setInvoices} onDelete={deleteInvoice} company={company} />;
       case 'reports': return <ReportsScreen cases={cases} invoices={invoices} />;
       case 'whitelist': return <WhitelistScreen session={session} onLogout={logout} list={whitelist} setList={setWhitelist} />;
       case 'settings': return <SettingsScreen session={session} company={company} onSave={saveCompany} />;

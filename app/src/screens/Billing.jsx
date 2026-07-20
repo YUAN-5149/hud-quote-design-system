@@ -1,19 +1,33 @@
 import { useState } from 'react';
 import { Panel, Metric, Chip, Button, Field, Input, Modal, Select, Icon } from '../components/Primitives.jsx';
-import { fmt, fmtMD, toChineseUpper, todayISO } from '../lib/format.js';
+import { fmt, fmtMD, toChineseUpper, todayISO, validateGUI } from '../lib/format.js';
+import { GuiStatus, useGuiVerify } from '../components/GuiStatus.jsx';
 
-function NewInvoiceModal({ open, onClose, onCreate, cases }) {
+function NewInvoiceModal({ open, onClose, onCreate, cases, company = {} }) {
   const [caseId, setCaseId] = useState(cases[0]?.id || '');
   const [stage, setStage] = useState('第一期 · 訂金 50%');
   const [amount, setAmount] = useState('');
   const [due, setDue] = useState('');
+  // 統編預設帶案件的，可改（開發票以此為準）
+  const [gui, setGui] = useState(cases[0]?.gui || '');
+  const [client, setClient] = useState((cases[0]?.client || '').split(' · ')[0]);
+
+  const pickCase = (id) => {
+    setCaseId(id);
+    const c = cases.find(x => x.id === id);
+    setGui(c?.gui || '');
+    setClient((c?.client || '').split(' · ')[0]);
+  };
+
+  const guiVerify = useGuiVerify(company.gcisProxy || '', gui);
+  const guiInvalid = gui && !validateGUI(gui);
 
   const submit = () => {
     const c = cases.find(x => x.id === caseId);
-    if (!c || !+amount) return;
+    if (!c || !+amount || guiInvalid) return;
     onCreate({
       id: `B-${c.id.replace('#','')}-${Date.now() % 10}`,
-      caseId: c.id, case: c.name, client: c.client.split(' · ')[0], gui: c.gui || '',
+      caseId: c.id, case: c.name, client: client.trim() || '—', gui: gui.trim(),
       stage, amount: +amount,
       issuedAt: todayISO(), dueAt: due || null, paidAt: null,
       status: 'warn', statusLabel: '待收款',
@@ -35,7 +49,23 @@ function NewInvoiceModal({ open, onClose, onCreate, cases }) {
     >
       <div className="quote-meta-grid">
         <Field label="案件 · CASE">
-          <Select value={caseId} onChange={setCaseId} options={cases.map(c => ({ value: c.id, label: `${c.id} ${c.name}` }))} />
+          <Select value={caseId} onChange={pickCase} options={cases.map(c => ({ value: c.id, label: `${c.id} ${c.name}` }))} />
+        </Field>
+        <Field label="業主 · CLIENT">
+          <Input value={client} onChange={e => setClient(e.target.value)} placeholder="開立發票抬頭" />
+        </Field>
+        <Field
+          label="統一編號 · GUI"
+          error={guiInvalid ? '統編檢核未通過' : ''}
+          helper={guiVerify.state === 'idle' || guiVerify.state === 'off' ? '開立發票用，預設帶入案件統編' : ''}
+        >
+          <Input
+            value={gui}
+            onChange={e => setGui(e.target.value.replace(/\D/g, '').slice(0, 8))}
+            placeholder="8 位數字"
+            inputMode="numeric"
+          />
+          <GuiStatus verify={guiVerify} onAdopt={(name) => setClient(name)} />
         </Field>
         <Field label="期別 · STAGE">
           <Select value={stage} onChange={setStage} options={[
@@ -59,7 +89,7 @@ function NewInvoiceModal({ open, onClose, onCreate, cases }) {
   );
 }
 
-export function BillingScreen({ cases, invoices, setInvoices, onDelete }) {
+export function BillingScreen({ cases, invoices, setInvoices, onDelete, company = {} }) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
 
@@ -159,7 +189,13 @@ export function BillingScreen({ cases, invoices, setInvoices, onDelete }) {
         </div>
       </Panel>
 
-      <NewInvoiceModal open={open} onClose={() => setOpen(false)} onCreate={(v) => setInvoices([{ ...v, id: nextInvoiceId(v.caseId) }, ...invoices])} cases={cases} />
+      <NewInvoiceModal
+        open={open}
+        onClose={() => setOpen(false)}
+        onCreate={(v) => setInvoices([{ ...v, id: nextInvoiceId(v.caseId) }, ...invoices])}
+        cases={cases}
+        company={company}
+      />
     </div>
   );
 }
