@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Data Table" subtitle="Case list row with status chips" viewport="700x200" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Data Table Row</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 14px; background: var(--bg-panel); }
+  .tbl { width: 100%; border-collapse: collapse; }
+  .th { font-family: var(--font-mono); font-size: 9px; color: var(--accent); letter-spacing: 0.24em; text-transform: uppercase; text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line-strong); }
+  .th-r { text-align: right; }
+  .td { padding: 10px; font-family: var(--font-tc); font-size: 13px; color: var(--fg-1); border-bottom: 1px solid var(--line-faint); }
+  .td-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--fg-2); }
+  .td-r { text-align: right; }
+  .tr-active { background: rgba(0,229,255,0.04); }
+  .tr-active .td { color: var(--fg-1); }
+  .tr-active .td-mono { color: var(--accent); }
+  .chip { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; }
+</style>
+</head>
+<body>
+<table class="tbl">
+  <thead>
+    <tr>
+      <th class="th">CASE</th>
+      <th class="th">業主</th>
+      <th class="th">狀態</th>
+      <th class="th th-r">金額</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="tr-active">
+      <td class="td td-mono">#2025-0418</td>
+      <td class="td">大明商辦 3F 配電</td>
+      <td class="td"><span class="chip" style="color:var(--accent);border-color:var(--line-active);background:var(--accent-tint)"><span class="dot" style="background:var(--accent)"></span>進行中</span></td>
+      <td class="td td-mono td-r">NT$ 128,400</td>
+    </tr>
+    <tr>
+      <td class="td td-mono">#2025-0416</td>
+      <td class="td">信義區吳公館</td>
+      <td class="td"><span class="chip" style="color:var(--warn);border-color:var(--warn);background:var(--warn-tint)"><span class="dot" style="background:var(--warn)"></span>待確認</span></td>
+      <td class="td td-mono td-r">NT$ 48,200</td>
+    </tr>
+    <tr>
+      <td class="td td-mono">#2025-0411</td>
+      <td class="td">文心飯店地下機房</td>
+      <td class="td"><span class="chip" style="color:var(--alert);border-color:var(--alert);background:var(--alert-tint)"><span class="dot" style="background:var(--alert)"></span>逾期</span></td>
+      <td class="td td-mono td-r">NT$ 312,800</td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>

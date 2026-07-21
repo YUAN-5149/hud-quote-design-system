@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/hud-quote-design-system/app/sw.js', { scope: '/hud-quote-design-system/app/' })})}

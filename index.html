@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>水電報價 HUD Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="colors_and_type.css">
+<style>
+  body {
+    min-height: 100vh;
+    padding: 48px 24px 64px;
+    display: flex;
+    justify-content: center;
+  }
+  .shell { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 32px; }
+
+  .hero { display: flex; align-items: center; gap: 20px; }
+  .hero svg { flex-shrink: 0; }
+  .hero-title { font-family: var(--font-display); font-size: 30px; font-weight: 700; color: var(--fg-1); letter-spacing: 0.04em; line-height: 1.15; }
+  .hero-sub { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-top: 6px; }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--line-base);
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    padding: 20px;
+  }
+  .panel-hd {
+    font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent);
+    border-bottom: 1px solid var(--line-faint);
+    padding-bottom: 10px; margin-bottom: 16px;
+    display: flex; justify-content: space-between;
+  }
+  .panel-hd span:last-child { color: var(--fg-3); }
+
+  .cta {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 18px 20px;
+    background: var(--bg-panel);
+    border: 1px solid var(--line-active);
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    text-decoration: none;
+    transition: all 200ms cubic-bezier(0.16,1,0.3,1);
+  }
+  .cta:hover { box-shadow: 0 0 0 1px rgba(0,229,255,0.4), 0 0 24px -4px rgba(0,229,255,0.5); }
+  .cta-name { font-family: var(--font-tc); font-size: 16px; font-weight: 700; color: var(--fg-1); }
+  .cta-sub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; color: var(--fg-3); margin-top: 4px; }
+  .cta-go { font-family: var(--font-mono); font-size: 12px; color: var(--accent); letter-spacing: 0.1em; white-space: nowrap; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+  .card {
+    display: block;
+    padding: 12px 14px;
+    background: var(--bg-panel-2);
+    border: 1px solid var(--line-faint);
+    text-decoration: none;
+    transition: all 200ms cubic-bezier(0.16,1,0.3,1);
+  }
+  .card:hover { border-color: var(--line-active); background: rgba(0,229,255,0.06); }
+  .card-name { font-family: var(--font-tc); font-size: 13px; font-weight: 500; color: var(--fg-1); }
+  .card-code { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em; color: var(--fg-3); text-transform: uppercase; margin-top: 3px; }
+
+  .foot { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; color: var(--fg-4); display: flex; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="hero">
+    <svg viewBox="0 0 64 64" width="52" height="52" fill="none" stroke="#00E5FF" stroke-width="1.5">
+      <path d="M32 3 L57 17 L57 47 L32 61 L7 47 L7 17 Z"/>
+      <path d="M32 20 C32 20, 26 28, 26 34 C26 38.5 28.7 41 32 41 C35.3 41 38 38.5 38 34 C38 28 32 20 32 20 Z"/>
+      <path d="M32 28 L30 33 L33 33 L31 38" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <div class="hero-title">水電報價 HUD Design System</div>
+      <div class="hero-sub">Hydro·Electric // Quotation Console · Taiwan</div>
+    </div>
+  </div>
+
+  <a class="cta" href="app/">
+    <div>
+      <div class="cta-name">報價系統 Demo · QUOTATION CONSOLE</div>
+      <div class="cta-sub">React App · 主控台 / 案件 / 報價 / 請款 / 材料 / 報表 · 支援手機</div>
+    </div>
+    <span class="cta-go">LAUNCH ›</span>
+  </a>
+
+  <div class="panel">
+    <div class="panel-hd"><span>Design System · 基礎</span><span>FOUNDATIONS</span></div>
+    <div class="grid">
+      <a class="card" href="preview/colors-base.html"><div class="card-name">底色系統</div><div class="card-code">Colors · Base</div></a>
+      <a class="card" href="preview/colors-accent.html"><div class="card-name">強調色</div><div class="card-code">Colors · Accent</div></a>
+      <a class="card" href="preview/colors-text.html"><div class="card-name">文字色階</div><div class="card-code">Colors · Text</div></a>
+      <a class="card" href="preview/type-display.html"><div class="card-name">標題字體</div><div class="card-code">Type · Display</div></a>
+      <a class="card" href="preview/type-body.html"><div class="card-name">內文字體</div><div class="card-code">Type · Body</div></a>
+      <a class="card" href="preview/type-mono.html"><div class="card-name">等寬數據</div><div class="card-code">Type · Mono</div></a>
+      <a class="card" href="preview/spacing.html"><div class="card-name">間距</div><div class="card-code">Spacing</div></a>
+      <a class="card" href="preview/radii.html"><div class="card-name">圓角與切角</div><div class="card-code">Radii</div></a>
+      <a class="card" href="preview/elevation.html"><div class="card-name">層次光暈</div><div class="card-code">Elevation</div></a>
+      <a class="card" href="preview/motion.html"><div class="card-name">動效</div><div class="card-code">Motion</div></a>
+      <a class="card" href="preview/voice.html"><div class="card-name">文案語氣</div><div class="card-code">Voice</div></a>
+      <a class="card" href="preview/logo.html"><div class="card-name">品牌標誌</div><div class="card-code">Logo</div></a>
+      <a class="card" href="preview/iconography.html"><div class="card-name">圖示</div><div class="card-code">Iconography</div></a>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd"><span>Design System · 元件</span><span>COMPONENTS</span></div>
+    <div class="grid">
+      <a class="card" href="preview/buttons.html"><div class="card-name">按鈕</div><div class="card-code">Buttons</div></a>
+      <a class="card" href="preview/chips.html"><div class="card-name">狀態籤</div><div class="card-code">Chips</div></a>
+      <a class="card" href="preview/forms.html"><div class="card-name">表單</div><div class="card-code">Forms</div></a>
+      <a class="card" href="preview/panel.html"><div class="card-name">HUD 面板</div><div class="card-code">Panel</div></a>
+      <a class="card" href="preview/table.html"><div class="card-name">資料表格</div><div class="card-code">Table</div></a>
+      <a class="card" href="ui_kits/quotation/index.html"><div class="card-name">原型 · CDN 版</div><div class="card-code">UI Kit · Prototype</div></a>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>水電報價 HUD DESIGN SYSTEM</span>
+    <span>·</span>
+    <span>BUILT WITH VITE + REACT</span>
+  </div>
+</div>
+</body>
+</html>

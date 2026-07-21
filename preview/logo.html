@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Logo" subtitle="Mark + wordmark, dark and light" viewport="700x180" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Logo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 20px; display: flex; align-items: center; gap: 32px; background: var(--bg-base); }
+  .logo-block { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .logo-block .caption { font-size: 9px; }
+  .mark { color: var(--accent); }
+  .dark-bg { background: var(--bg-panel); padding: 16px 24px; border: 1px solid var(--line-base); }
+  .light-bg { background: #E6F1FF; padding: 16px 24px; }
+  .light-bg .mark { color: #021018; }
+</style>
+</head>
+<body>
+  <div class="logo-block">
+    <div class="mark" style="width:56px;height:56px"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
+      <path d="M32 3 L57 17 L57 47 L32 61 L7 47 L7 17 Z"/>
+      <path d="M32 12 L49 22 L49 42 L32 52 L15 42 L15 22 Z" stroke-width="1" opacity="0.4"/>
+      <path d="M15 32 L22 32 L24 30 L28 30" stroke-width="1.5"/>
+      <path d="M36 30 L40 30 L42 32 L49 32" stroke-width="1.5"/>
+      <path d="M32 20 C32 20, 26 28, 26 34 C26 38.5 28.7 41 32 41 C35.3 41 38 38.5 38 34 C38 28 32 20 32 20 Z"/>
+      <path d="M32 28 L30 33 L33 33 L31 38" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></div>
+    <div class="caption">MARK</div>
+  </div>
+  <div class="dark-bg" style="display:flex;align-items:center;gap:14px">
+    <div class="mark" style="width:44px;height:44px"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="44" height="44">
+      <path d="M32 3 L57 17 L57 47 L32 61 L7 47 L7 17 Z"/>
+      <path d="M32 20 C32 20, 26 28, 26 34 C26 38.5 28.7 41 32 41 C35.3 41 38 38.5 38 34 C38 28 32 20 32 20 Z"/>
+      <path d="M32 28 L30 33 L33 33 L31 38" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></div>
+    <div style="height:36px;width:1px;background:var(--line-strong)"></div>
+    <div>
+      <div style="font-family:var(--font-tc);font-size:18px;font-weight:700;color:var(--fg-1);letter-spacing:2px">水電報價</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--accent);letter-spacing:3px;margin-top:3px">QUOTATION · HUD</div>
+    </div>
+  </div>
+  <div class="light-bg" style="display:flex;align-items:center;gap:14px">
+    <div class="mark" style="width:44px;height:44px"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" width="44" height="44">
+      <path d="M32 3 L57 17 L57 47 L32 61 L7 47 L7 17 Z"/>
+      <path d="M32 20 C32 20, 26 28, 26 34 C26 38.5 28.7 41 32 41 C35.3 41 38 38.5 38 34 C38 28 32 20 32 20 Z"/>
+      <path d="M32 28 L30 33 L33 33 L31 38" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg></div>
+    <div style="height:36px;width:1px;background:#021018;opacity:0.2"></div>
+    <div>
+      <div style="font-family:'Noto Sans TC', sans-serif;font-size:18px;font-weight:700;color:#021018;letter-spacing:2px">水電報價</div>
+      <div style="font-family:'JetBrains Mono', monospace;font-size:9px;color:#0099AA;letter-spacing:3px;margin-top:3px">QUOTATION · HUD</div>
+    </div>
+  </div>
+</body>
+</html>

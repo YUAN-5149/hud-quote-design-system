@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Base Colors" subtitle="Background field — void to input" viewport="700x140" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Base Colors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 20px; background: var(--bg-base); }
+  .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .sw { height: 80px; border: 1px solid var(--line-base); padding: 10px; display: flex; flex-direction: column; justify-content: space-between; }
+  .sw .name { font-family: var(--font-mono); font-size: 10px; color: var(--fg-1); letter-spacing: 0.1em; text-transform: uppercase; }
+  .sw .hex { font-family: var(--font-mono); font-size: 10px; color: var(--accent); letter-spacing: 0.08em; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="sw" style="background:#020509"><span class="name">BG · VOID</span><span class="hex">#020509</span></div>
+    <div class="sw" style="background:#040810"><span class="name">BG · BASE</span><span class="hex">#040810</span></div>
+    <div class="sw" style="background:#0A111E"><span class="name">BG · PANEL</span><span class="hex">#0A111E</span></div>
+    <div class="sw" style="background:#0F1828"><span class="name">BG · PANEL 2</span><span class="hex">#0F1828</span></div>
+    <div class="sw" style="background:#060C16"><span class="name">BG · INPUT</span><span class="hex">#060C16</span></div>
+  </div>
+</body>
+</html>

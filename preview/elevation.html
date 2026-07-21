@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Spacing" name="Elevation / Glow" subtitle="Glow-based elevation (no drop shadows)" viewport="700x140" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Elevation / Glow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 28px; background: var(--bg-base); display: flex; gap: 28px; align-items: center; justify-content: center; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .box { width: 100px; height: 60px; background: var(--bg-panel); border: 1px solid var(--line-base); }
+  .label { font-family: var(--font-mono); font-size: 9px; color: var(--fg-3); letter-spacing: 0.15em; text-transform: uppercase; }
+  .g-sm { box-shadow: 0 0 12px -2px rgba(0,229,255,0.5); border-color: var(--line-active); }
+  .g-md { box-shadow: 0 0 0 1px rgba(0,229,255,0.6), 0 0 24px -4px rgba(0,229,255,0.5); border-color: transparent; }
+  .g-lg { box-shadow: 0 0 0 1px rgba(0,229,255,0.6), 0 0 48px -8px rgba(0,229,255,0.5); border-color: transparent; }
+  .g-warn { box-shadow: 0 0 0 1px #FFB300, 0 0 24px -4px rgba(255,179,0,0.45); border-color: transparent; }
+  .g-alert { box-shadow: 0 0 0 1px #FF3B47, 0 0 24px -4px rgba(255,59,71,0.45); border-color: transparent; }
+</style>
+</head>
+<body>
+  <div class="item"><div class="box"></div><div class="label">NONE</div></div>
+  <div class="item"><div class="box g-sm"></div><div class="label">GLOW · SM</div></div>
+  <div class="item"><div class="box g-md"></div><div class="label">GLOW · MD</div></div>
+  <div class="item"><div class="box g-lg"></div><div class="label">GLOW · LG</div></div>
+  <div class="item"><div class="box g-warn"></div><div class="label">WARN</div></div>
+  <div class="item"><div class="box g-alert"></div><div class="label">ALERT</div></div>
+</body>
+</html>
