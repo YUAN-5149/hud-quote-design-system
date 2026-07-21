@@ -18,12 +18,17 @@ Copy-Item (Join-Path $repo 'app\dist\*') (Join-Path $site 'app') -Recurse
 New-Item -ItemType File (Join-Path $site '.nojekyll') | Out-Null
 
 # 3. 建立獨立 git 倉庫並驗證根目錄，確認無誤才推送
-git init -b gh-pages $site
+# init 一律用 -C 進入 $site 再執行，與下方其他指令一致；用路徑參數形式
+# （git init ... $site）曾在剛複製完檔案的目錄上偶發不留下 .git，導致後續
+# -C 指令往上誤指到主 repo。init 後立即斷言 .git 確實存在，讓失敗在此就顯現。
+git -C $site init -b gh-pages
 if ($LASTEXITCODE -ne 0) { throw 'git init failed' }
+if (-not (Test-Path (Join-Path $site '.git'))) { throw "git init did not create .git in $site - abort" }
 $top = (git -C $site rev-parse --show-toplevel).Replace('/', '\')
 if ($top -ne $site) { throw "git toplevel mismatch: '$top' != '$site' - abort to avoid committing wrong directory" }
 
 git -C $site add -A
+if ($LASTEXITCODE -ne 0) { throw 'git add failed' }
 git -C $site commit -m 'Deploy GitHub Pages'
 if ($LASTEXITCODE -ne 0) { throw 'git commit failed' }
 
