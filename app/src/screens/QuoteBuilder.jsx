@@ -203,6 +203,8 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
     setTimeout(() => setSavedTick(false), 1600);
   };
   const sendQuote = () => onSave(buildRecord('warn', '待業主簽回'), true);
+  // 草稿另存新版本：目前畫面上的內容存成下一版草稿；原版本維持上次儲存的內容不變
+  const saveAsNewVersion = () => onNewVersion({ ...quote, ...buildRecord('info', '草稿') });
 
   return (
     <div className="screen screen-quote" data-screen-label="Quote Builder">
@@ -221,6 +223,7 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
           ) : (
             <>
               <Button variant="solid" icon={savedTick ? 'check' : 'save'} onClick={saveDraft}>{savedTick ? '已儲存' : '儲存草稿'}</Button>
+              {quote && <Button variant="solid" icon="file-plus" onClick={saveAsNewVersion}>另存新版本</Button>}
               <Button variant="primary" icon="send" onClick={sendQuote}>送出報價</Button>
             </>
           )}
@@ -247,7 +250,7 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
           <span className="version-note">
             {readOnly
               ? `${quote.statusLabel}版本唯讀 — 要修改請建立新版本`
-              : '草稿可編輯'}
+              : '草稿可編輯 · 「另存新版本」會把目前內容存成新的一版，原版本不變'}
           </span>
         </div>
       )}

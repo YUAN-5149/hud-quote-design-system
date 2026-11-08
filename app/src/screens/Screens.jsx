@@ -552,9 +552,14 @@ export function QuotesList({ quotes = [], onNewQuote, onOpenQuote, onSign, onCon
                     <td className="mono" style={{ textAlign: 'right' }}>{fmt(q.amount)}</td>
                     <td style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                       {q.status === 'info' && (
-                        <button className="btn btn-solid btn-sm" onClick={() => onOpenQuote(q)}>
-                          <Icon name="pencil" size={12} /><span>繼續編輯</span>
-                        </button>
+                        <div style={{ display: 'inline-flex', gap: 6 }}>
+                          <button className="btn btn-solid btn-sm" onClick={() => onNewVersion(q)}>
+                            <Icon name="file-plus" size={12} /><span>新版本</span>
+                          </button>
+                          <button className="btn btn-solid btn-sm" onClick={() => onOpenQuote(q)}>
+                            <Icon name="pencil" size={12} /><span>繼續編輯</span>
+                          </button>
+                        </div>
                       )}
                       {(st === 'warn' || st === 'alert') && (
                         <div style={{ display: 'inline-flex', gap: 6 }}>
