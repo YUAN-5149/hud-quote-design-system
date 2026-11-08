@@ -75,7 +75,7 @@ export function AddLineItemModal({ open, onClose, onAdd, materials = MATERIALS }
   const [mode, setMode] = useState('catalog'); // 'catalog' | 'custom'
   const [q, setQ] = useState('');
   const [custom, setCustom] = useState({ name: '', cat: '配電', unit: '個', qty: 1, price: 0 });
-  const filtered = materials.filter(m => m.name.includes(q) || m.code.includes(q));
+  const filtered = materials.filter(m => String(m.name ?? '').includes(q) || String(m.code ?? '').includes(q));
 
   const addFromCatalog = (m) => {
     onAdd({
@@ -595,7 +595,7 @@ const CODE_PREFIX = { '配電': 'PWR', '電線': 'WIRE', '管材': 'PIPE', '工�
 
 function MaterialModal({ onClose, onSubmit, materials, editing = null }) {
   const blank = editing
-    ? { code: editing.code, name: editing.name, cat: editing.cat, unit: editing.unit, price: String(editing.price), stock: typeof editing.stock === 'number' ? String(editing.stock) : '' }
+    ? { code: String(editing.code ?? ''), name: String(editing.name ?? ''), cat: editing.cat || '配電', unit: String(editing.unit ?? ''), price: String(editing.price ?? ''), stock: typeof editing.stock === 'number' ? String(editing.stock) : '' }
     : { code: '', name: '', cat: '配電', unit: '個', price: '', stock: '' };
   const [form, setForm] = useState(blank);
   const [err, setErr] = useState({});
@@ -605,7 +605,7 @@ function MaterialModal({ onClose, onSubmit, materials, editing = null }) {
 
   const autoCode = () => {
     const prefix = CODE_PREFIX[form.cat] || 'ITM';
-    let n = materials.filter(m => m.code.startsWith(prefix + '-')).length + 1;
+    let n = materials.filter(m => String(m.code ?? '').startsWith(prefix + '-')).length + 1;
     while (materials.some(m => m.code === `${prefix}-${String(n).padStart(3, '0')}`)) n++;
     return `${prefix}-${String(n).padStart(3, '0')}`;
   };
@@ -614,7 +614,7 @@ function MaterialModal({ onClose, onSubmit, materials, editing = null }) {
   const suggest = (key, hintKey) => {
     const mk = (list) => {
       const seen = new Set();
-      return list.filter(m => m[key] && !seen.has(m[key]) && seen.add(m[key])).map(m => ({ value: m[key], hint: m[hintKey] }));
+      return list.filter(m => m[key] && !seen.has(m[key]) && seen.add(m[key])).map(m => ({ value: String(m[key]), hint: m[hintKey] == null ? '' : String(m[hintKey]) }));
     };
     return [
       { label: `本類別 · ${form.cat}`, items: mk(materials.filter(m => m.cat === form.cat)) },
@@ -755,7 +755,7 @@ export function MaterialsScreen({ materials = MATERIALS, cases = [], moves = [],
     onDelete(m.code);
   };
   const filtered = materials.filter(m =>
-    (cat === 'all' || m.cat === cat) && (m.name.includes(q) || m.code.includes(q))
+    (cat === 'all' || m.cat === cat) && (String(m.name ?? '').includes(q) || String(m.code ?? '').includes(q))
   );
   const stockItems = materials.filter(m => typeof m.stock === 'number');
   const totalValue = stockItems.reduce((s, m) => s + m.stock * m.price, 0);

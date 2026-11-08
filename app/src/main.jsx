@@ -9,9 +9,12 @@ import '../../ui_kits/quotation/app.css';
 import './styles/rwd.css';
 import './styles/print.css';
 import App from './App.jsx';
+import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>
 );
