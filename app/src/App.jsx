@@ -81,7 +81,16 @@ export default function App() {
 
   if (!session) return <LoginScreen onAuth={handleAuth} />;
 
-  const openCase = (c) => { setSelectedCase(c); setSelectedQuote(null); setScreen('quote'); };
+  // 開啟案件：已有報價單就開最新版本（版本號最大、同版取最新），沒有才開一張新的空白報價
+  const openCase = (c) => {
+    const verNum = (q) => +String(q.version || 'v1').replace('v', '') || 0;
+    const latest = quotes
+      .filter(q => q.caseId === c.id)
+      .sort((a, b) => (verNum(b) - verNum(a)) || ((b._ord || 0) - (a._ord || 0)))[0];
+    setSelectedCase(c);
+    setSelectedQuote(latest || null);
+    setScreen('quote');
+  };
   const openNewQuote = () => { setSelectedCase(null); setSelectedQuote(null); setScreen('quote'); };
   // 同日建立多筆案件時，流水後綴避免撞號
   const createCase = (c) => setCases(prev => {

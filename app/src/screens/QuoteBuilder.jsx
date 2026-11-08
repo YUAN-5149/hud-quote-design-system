@@ -4,7 +4,6 @@ import { Panel, Chip, Button, Field, Input, Toggle, Modal, Icon } from '../compo
 import { GuiStatus, useGuiVerify } from '../components/GuiStatus.jsx';
 import { gcisSearchCompany } from '../lib/gcis.js';
 import { AddLineItemModal } from './Screens.jsx';
-import { LINE_ITEMS_INIT } from '../lib/data.js';
 import { fmt, fmtMD, toChineseUpper, validateGUI, todayYMD, todayISO, addDays, roadName } from '../lib/format.js';
 import { quoteTotals } from '../lib/calc.js';
 
@@ -155,7 +154,7 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
   const canNameCase = !readOnly && (!quote || quote.version === 'v1');
   // 使用者手動改過名稱後，就不再被工程地點自動覆蓋
   const [nameTouched, setNameTouched] = useState(!!quote);
-  const [items, setItems] = useState(quote?.items?.length ? quote.items : LINE_ITEMS_INIT);
+  const [items, setItems] = useState(quote?.items?.length ? quote.items : []); // 新報價從空白開始，不帶示範工項
   const [taxInc, setTaxInc] = useState(quote?.taxInc ?? true);
   const [addOpen, setAddOpen] = useState(false);
   const [guiSearchOpen, setGuiSearchOpen] = useState(false);
