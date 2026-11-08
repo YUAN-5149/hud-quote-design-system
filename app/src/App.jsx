@@ -165,7 +165,7 @@ export default function App() {
       version: `v${nextV}`,
       status: 'info', statusLabel: '草稿',
       issuedAt: todayISO(),
-      validAt: addDays(todayISO(), 30),
+      validAt: addDays(todayISO(), +quote.info?.validDays > 0 ? Math.round(+quote.info.validDays) : 30),
       signedAt: null,
       invoicedCount: 0,
       invoicedAmount: 0,

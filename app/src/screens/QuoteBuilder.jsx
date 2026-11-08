@@ -10,6 +10,14 @@ import { quoteTotals } from '../lib/calc.js';
 // ─────────────────────────────────────────────────────────────
 // 列印版報價單 — 白底正式文件（@media print 才顯示，見 print.css）
 // ─────────────────────────────────────────────────────────────
+// 報價有效天數：存在 info.validDays；舊報價沒有這個欄位時沿用預設 30 日
+const DEFAULT_VALID_DAYS = 30;
+const VALID_DAY_PRESETS = [7, 15, 30, 60];
+export const validDaysOf = (info) => {
+  const n = Math.round(+info?.validDays);
+  return n > 0 ? n : DEFAULT_VALID_DAYS;
+};
+
 function PrintQuote({ info, items, subtotal, tax, total, taxInc, company }) {
   return createPortal(
     <div className="print-quote">
@@ -26,7 +34,7 @@ function PrintQuote({ info, items, subtotal, tax, total, taxInc, company }) {
           <div className="pq-doc-meta">
             <span>報價日期：{todayYMD()}</span>
             <span>報價單號：{info.quoteNo}</span>
-            <span>有效期限：報價日起 30 日</span>
+            <span>有效期限：報價日起 {validDaysOf(info)} 日</span>
           </div>
         </div>
       </header>
@@ -75,7 +83,7 @@ function PrintQuote({ info, items, subtotal, tax, total, taxInc, company }) {
       <div className="pq-upper">合計金額（大寫）：{toChineseUpper(total)}</div>
 
       <ol className="pq-notes">
-        <li>本報價單有效期限為報價日起 30 日，逾期請重新確認。</li>
+        <li>本報價單有效期限為報價日起 {validDaysOf(info)} 日，逾期請重新確認。</li>
         <li>付款方式：簽約訂金 50%，完工驗收後付清尾款。匯款帳戶：{company.bank || '—'}。</li>
         <li>施工範圍以本報價單工項為準，追加工程另行報價。</li>
         <li>本報價含營業稅，如需開立統一發票請提供統編。</li>
@@ -171,6 +179,7 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
       phone: '',
       location,
       duration: '14 天',
+      validDays: DEFAULT_VALID_DAYS,
     };
   });
   const { subtotal, tax, total } = quoteTotals(items, taxInc);
@@ -192,7 +201,8 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
     status, statusLabel,
     amount: total, taxInc, items, info,
     issuedAt: status === 'warn' ? todayISO() : (quote?.issuedAt || todayISO()),
-    validAt: status === 'warn' ? addDays(todayISO(), 30) : (quote?.validAt || addDays(todayISO(), 30)),
+    // 到期日＝報價日＋有效天數；草稿改天數後再存檔也會跟著更新
+    validAt: addDays(status === 'warn' ? todayISO() : (quote?.issuedAt || todayISO()), validDaysOf(info)),
     signedAt: quote?.signedAt || null,
     invoicedCount: quote?.invoicedCount || 0,
     invoicedAmount: quote?.invoicedAmount || 0,
@@ -358,6 +368,28 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
             </div>
             <div className="calc-upper mono-label">{toChineseUpper(total)}</div>
             <Toggle on={taxInc} onChange={readOnly ? () => {} : setTaxInc} label="含營業稅" />
+            <div className="valid-days">
+              <span className="mono-label">報價有效期限 · VALID</span>
+              <div className="valid-days-row">
+                {VALID_DAY_PRESETS.map(d => (
+                  <button
+                    type="button" key={d} disabled={readOnly}
+                    className={`valid-day-btn ${validDaysOf(info) === d ? 'active' : ''}`}
+                    onClick={() => setInfo({ ...info, validDays: d })}
+                  >{d} 天</button>
+                ))}
+                <label className="valid-day-custom">
+                  <input
+                    type="number" min="1" max="365" inputMode="numeric" disabled={readOnly}
+                    className="input input-inline" aria-label="自訂有效天數"
+                    value={info.validDays ?? DEFAULT_VALID_DAYS}
+                    onChange={e => setInfo({ ...info, validDays: e.target.value === '' ? '' : Math.min(365, Math.max(0, Math.round(+e.target.value))) })}
+                  />
+                  <span>天</span>
+                </label>
+              </div>
+              <div className="row-sub mono">送出後到期日：{fmtMD(addDays(todayISO(), validDaysOf(info)))}</div>
+            </div>
           </Panel>
           <Panel title="核准流程" meta="WORKFLOW">
             <ol className="steps">
