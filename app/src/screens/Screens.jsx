@@ -642,14 +642,14 @@ function MaterialModal({ onClose, onSubmit, materials, editing = null }) {
       }
     >
       <div className="quote-meta-grid">
-        <Field label="品名 · NAME" error={err.name}>
-          <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="無熔絲開關 NFB 2P 20A" autoFocus />
+        <Field label="代碼 · CODE" error={err.code} helper={editing ? '代碼不可變更' : form.code.trim() ? '' : `留空自動編號：${autoCode()}`}>
+          <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="NFB-2P-20" className="input mono" disabled={!!editing} />
         </Field>
         <Field label="類別 · CATEGORY">
           <Select value={form.cat} onChange={pickCat} options={['配電','電線','管材','工資','雜項'].map(c => ({ value: c, label: c }))} />
         </Field>
-        <Field label="代碼 · CODE" error={err.code} helper={editing ? '代碼不可變更' : form.code.trim() ? '' : `留空自動編號：${autoCode()}`}>
-          <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="NFB-2P-20" className="input mono" disabled={!!editing} />
+        <Field label="品名 · NAME" error={err.name}>
+          <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="無熔絲開關 NFB 2P 20A" autoFocus />
         </Field>
         <Field label="單位 · UNIT">
           <Input value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} placeholder={isLabor ? '工時' : '個'} />
