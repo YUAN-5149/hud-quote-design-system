@@ -19,6 +19,15 @@ export function usePersistedState(key, seed) {
   return [value, setValue];
 }
 
+// Firestore 文件 ID 不可含「/」（會被當成路徑分隔），也不可為「.」「..」或 __xxx__。
+// 品項代碼如 PVC三通1又1/2" 含斜線，故轉成安全的 ID；資料本身仍保留原始代碼。
+// 不含這些字元的既有 ID 維持不變，舊資料照常對應。
+export function docId(key) {
+  const id = String(key).replace(/\//g, '%2F');
+  if (id === '' || id === '.' || id === '..' || /^__.*__$/.test(id)) return `id-${id}`;
+  return id;
+}
+
 // ─────────────────────────────────────────────────────────────
 // Firestore 即時同步集合
 // 介面與 useState 相容：setter 收到新陣列後，依 keyField diff 寫回
@@ -49,7 +58,7 @@ export function useSyncedCollection(name, seed, keyField, enabled = true) {
         if (snap.empty && seed.length) {
           const batch = writeBatch(db);
           seed.forEach((item, i) => {
-            batch.set(doc(col, String(item[keyField])), { ...item, _ord: seed.length - i });
+            batch.set(doc(col, docId(item[keyField])), { ...item, _ord: seed.length - i });
           });
           await batch.commit();
         }
@@ -79,12 +88,17 @@ export function useSyncedCollection(name, seed, keyField, enabled = true) {
           const old = prevMap.get(k);
           if (!old || JSON.stringify(old) !== JSON.stringify(item)) {
             const withOrd = item._ord ? item : { ...item, _ord: Date.now() };
-            setDoc(doc(db, name, k), withOrd).catch(e => console.warn(`寫入失敗 (${name}/${k})`, e));
+            // 個別寫入失敗只記錄警告，不讓畫面整個壞掉
+            try {
+              setDoc(doc(db, name, docId(k)), withOrd).catch(e => console.warn(`寫入失敗 (${name}/${k})`, e));
+            } catch (e) { console.warn(`寫入失敗 (${name}/${k})`, e); }
           }
         });
         prevMap.forEach((_, k) => {
           if (!nextMap.has(k)) {
-            deleteDoc(doc(db, name, k)).catch(e => console.warn(`刪除失敗 (${name}/${k})`, e));
+            try {
+              deleteDoc(doc(db, name, docId(k))).catch(e => console.warn(`刪除失敗 (${name}/${k})`, e));
+            } catch (e) { console.warn(`刪除失敗 (${name}/${k})`, e); }
           }
         });
       }
