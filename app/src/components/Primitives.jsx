@@ -144,7 +144,8 @@ export const Toggle =({ on, onChange, label }) => (
 export const Modal = ({ open, onClose, title, meta, width = 520, children, footer }) => {
   if (!open) return null;
   return (
-    <div className="modal-scrim" onClick={onClose}>
+    // 點灰色背景不關閉，避免誤觸遺失已填資料；請用右上角 × 或「取消」離開
+    <div className="modal-scrim">
       <div
         className="modal hud-panel hud-panel-active"
         style={{ width }}
@@ -154,7 +155,7 @@ export const Modal = ({ open, onClose, title, meta, width = 520, children, foote
           <span className="panel-title">{title}</span>
           <span className="panel-meta">
             {meta}
-            <button className="modal-close" onClick={onClose} aria-label="close">×</button>
+            <button type="button" className="modal-close" onClick={onClose} aria-label="關閉" title="關閉">×</button>
           </span>
         </div>
         <div className="hud-panel-body modal-body">{children}</div>

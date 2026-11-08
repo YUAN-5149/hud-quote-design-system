@@ -398,3 +398,6 @@
 .combo-item:hover, .combo-item:focus { background: var(--accent-tint); color: var(--accent); outline: none; }
 .combo-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .combo-hint { flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }
+
+/* ── 彈窗關閉鈕 · 放大便於點選（點灰色背景已不會關閉） ── */
+.modal-close { width: 32px; height: 32px; font-size: 20px; color: var(--fg-2); border-color: var(--line-strong); }
