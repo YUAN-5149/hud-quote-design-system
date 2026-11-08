@@ -10,6 +10,11 @@
 
   .print-quote {
     display: block;
+    /* 左右各留 2px：表格外框（border-collapse 有一半畫在框外）與右對齊文字
+       若剛好貼齊可列印範圍邊緣，部分瀏覽器會把最右邊的框線裁掉 */
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0 2px;
     color: #111;
     font-family: 'Noto Sans TC', 'Inter', sans-serif;
     font-size: 12px;
