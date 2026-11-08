@@ -401,3 +401,14 @@
 
 /* ── 彈窗關閉鈕 · 放大便於點選（點灰色背景已不會關閉） ── */
 .modal-close { width: 32px; height: 32px; font-size: 20px; color: var(--fg-2); border-color: var(--line-strong); }
+
+/* ── 新增工項 · 類別下拉 + 搜尋 ───────────────────────────── */
+.pick-filter { display: flex; gap: 8px; margin-bottom: 12px; align-items: stretch; }
+.pick-filter .pick-cat { flex: 0 0 170px; }
+.pick-filter .pick-cat .input { height: 100%; }
+.pick-filter .searchbar { flex: 1; min-width: 0; }
+.pick-filter .searchbar input { flex: 1; min-width: 0; width: auto; }
+@media (max-width: 520px) {
+  .pick-filter { flex-direction: column; }
+  .pick-filter .pick-cat { flex-basis: auto; }
+}

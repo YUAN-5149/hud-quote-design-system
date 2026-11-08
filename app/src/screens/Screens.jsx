@@ -75,7 +75,13 @@ export function AddLineItemModal({ open, onClose, onAdd, materials = MATERIALS }
   const [mode, setMode] = useState('catalog'); // 'catalog' | 'custom'
   const [q, setQ] = useState('');
   const [custom, setCustom] = useState({ name: '', cat: '配電', unit: '個', qty: 1, price: 0 });
-  const filtered = materials.filter(m => String(m.name ?? '').includes(q) || String(m.code ?? '').includes(q));
+  const [pickCat, setPickCat] = useState('all'); // 先選類別再挑品項；關閉後保留上次選擇
+  // 類別清單：固定五類在前，材料庫裡其他自訂類別接在後面；附上品項數
+  const catOptions = [...new Set(['配電', '電線', '管材', '工資', '雜項', ...materials.map(m => m.cat).filter(Boolean)])]
+    .map(c => ({ value: c, label: `${c}（${materials.filter(m => m.cat === c).length}）` }));
+  const filtered = materials.filter(m =>
+    (pickCat === 'all' || m.cat === pickCat) &&
+    (String(m.name ?? '').includes(q) || String(m.code ?? '').includes(q)));
 
   const addFromCatalog = (m) => {
     onAdd({
@@ -115,10 +121,15 @@ export function AddLineItemModal({ open, onClose, onAdd, materials = MATERIALS }
 
       {mode === 'catalog' && (
         <>
-          <div className="searchbar" style={{ marginBottom: 12 }}>
-            <Icon name="search" size={14} />
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="SEARCH · 品項 / 代碼" autoFocus />
-            <span className="mono-label" style={{ color: 'var(--fg-3)' }}>{filtered.length}/{materials.length}</span>
+          <div className="pick-filter">
+            <div className="pick-cat">
+              <Select value={pickCat} onChange={setPickCat} options={[{ value: 'all', label: `全部類別（${materials.length}）` }, ...catOptions]} />
+            </div>
+            <div className="searchbar">
+              <Icon name="search" size={14} />
+              <input value={q} onChange={e => setQ(e.target.value)} placeholder="SEARCH · 品項 / 代碼" autoFocus />
+              <span className="mono-label" style={{ color: 'var(--fg-3)', marginLeft: 'auto' }}>{filtered.length}/{materials.length}</span>
+            </div>
           </div>
           <div className="pick-list">
             {filtered.map(m => (
