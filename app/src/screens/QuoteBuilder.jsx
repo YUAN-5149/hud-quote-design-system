@@ -229,6 +229,18 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
   const updateQty = (id, qty) => setItems(items.map(it => it.id === id ? { ...it, qty: Math.max(0, qty) } : it));
   const removeItem = (id) => setItems(items.filter(it => it.id !== id));
   const addItem = (it) => setItems(prev => [...prev, it]);
+  // 調整工項順序（列印版依此順序）：↑↓ 按鈕一次一格，或按住左側把手拖曳
+  const moveItem = (from, to) => setItems(prev => {
+    if (from === to || from < 0 || to < 0 || from >= prev.length || to >= prev.length) return prev;
+    const next = [...prev];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    return next;
+  });
+  const [dragArmed, setDragArmed] = useState(null); // 按住把手才允許拖曳，避免干擾數量輸入框
+  const [dragFrom, setDragFrom] = useState(null);
+  const [dragOver, setDragOver] = useState(null);
+  const endDrag = () => { setDragArmed(null); setDragFrom(null); setDragOver(null); };
   const setF = (k) => (e) => setInfo({ ...info, [k]: e.target.value });
 
   // 組出報價單紀錄（保留簽回／請款進度），交給 App upsert
@@ -363,8 +375,35 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
                 </thead>
                 <tbody>
                   {items.map((it, i) => (
-                    <tr key={it.id}>
-                      <td className="mono row-sub">{String(i + 1).padStart(2, '0')}</td>
+                    <tr
+                      key={it.id}
+                      className={[
+                        dragFrom === i ? 'li-dragging' : '',
+                        dragOver === i && dragFrom !== null && dragFrom !== i ? (dragFrom < i ? 'li-drop-below' : 'li-drop-above') : '',
+                      ].join(' ')}
+                      draggable={!readOnly && dragArmed === it.id}
+                      onDragStart={(e) => { setDragFrom(i); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(i)); }}
+                      onDragOver={(e) => { if (dragFrom === null) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dragOver !== i) setDragOver(i); }}
+                      onDrop={(e) => { e.preventDefault(); if (dragFrom !== null) moveItem(dragFrom, i); endDrag(); }}
+                      onDragEnd={endDrag}
+                    >
+                      <td className="mono row-sub">
+                        <div className="li-order">
+                          {!readOnly && (
+                            <span
+                              className="li-grip" title="按住拖曳調整順序"
+                              onMouseDown={() => setDragArmed(it.id)} onMouseUp={() => setDragArmed(null)}
+                            ><Icon name="grip-vertical" size={14} /></span>
+                          )}
+                          <span>{String(i + 1).padStart(2, '0')}</span>
+                          {!readOnly && (
+                            <span className="li-arrows">
+                              <button type="button" className="li-arrow" title="上移" disabled={i === 0} onClick={() => moveItem(i, i - 1)}><Icon name="chevron-up" size={12} /></button>
+                              <button type="button" className="li-arrow" title="下移" disabled={i === items.length - 1} onClick={() => moveItem(i, i + 1)}><Icon name="chevron-down" size={12} /></button>
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td>{it.name}</td>
                       <td><Chip kind={it.type === 'labor' ? 'info' : 'dim'}>{it.cat}</Chip></td>
                       <td style={{ textAlign: 'right' }}>

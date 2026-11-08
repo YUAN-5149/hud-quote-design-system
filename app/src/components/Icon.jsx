@@ -1,6 +1,6 @@
 import {
-  Activity, ArrowLeftRight, Check, Download, FilePlus, FileText, FolderKanban, KeyRound,
-  LayoutGrid, Loader, LogIn, LogOut, Package, Pencil, Plus, Printer,
+  Activity, ArrowLeftRight, Check, ChevronDown, ChevronUp, Download, FilePlus, FileText, FolderKanban, KeyRound,
+  GripVertical, LayoutGrid, Loader, LogIn, LogOut, Package, Pencil, Plus, Printer,
   Receipt, Save, Search, Send, Settings, ShieldAlert, ShieldCheck,
   Smartphone, Trash2, User, UserPlus, X,
 } from 'lucide-react';
@@ -11,10 +11,13 @@ const MAP = {
   'activity': Activity,
   'arrow-left-right': ArrowLeftRight,
   'check': Check,
+  'chevron-down': ChevronDown,
+  'chevron-up': ChevronUp,
   'download': Download,
   'file-plus': FilePlus,
   'file-text': FileText,
   'folder-kanban': FolderKanban,
+  'grip-vertical': GripVertical,
   'key-round': KeyRound,
   'layout-grid': LayoutGrid,
   'loader': Loader,

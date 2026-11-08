@@ -431,3 +431,25 @@
 .steps .step-alert { color: var(--fg-1); }
 .steps .step-alert .step-mark { color: var(--alert); font-weight: 700; }
 .steps .step-alert .row-sub { color: var(--alert); }
+
+/* ── 工項排序 · 拖曳把手 + 上下移 ───────────────────────── */
+.li-order { display: flex; align-items: center; gap: 6px; }
+.li-grip { display: inline-flex; color: var(--fg-4); cursor: grab; padding: 2px; border-radius: 2px; }
+.li-grip:hover { color: var(--accent); background: var(--accent-tint); }
+.li-grip:active { cursor: grabbing; }
+.li-arrows { display: inline-flex; flex-direction: column; gap: 1px; }
+.li-arrow {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 15px; padding: 0; cursor: pointer;
+  background: transparent; color: var(--fg-3);
+  border: 1px solid var(--line-faint); border-radius: 2px;
+}
+.li-arrow:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+.li-arrow:disabled { opacity: 0.3; cursor: default; }
+.line-items tr.li-dragging { opacity: 0.4; }
+.line-items tr.li-drop-above td { box-shadow: inset 0 2px 0 var(--accent); }
+.line-items tr.li-drop-below td { box-shadow: inset 0 -2px 0 var(--accent); }
+@media (pointer: coarse) {
+  .li-grip { display: none; } /* 觸控裝置不支援原生拖曳，改用上下箭頭 */
+  .li-arrow { width: 28px; height: 22px; }
+}
