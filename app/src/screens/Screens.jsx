@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Panel, Metric, Chip, Button, Field, Input, Modal, Select, Icon } from '../components/Primitives.jsx';
+import { Panel, Metric, Chip, Button, Field, Input, ComboInput, Modal, Select, Icon } from '../components/Primitives.jsx';
 import { MATERIALS, MATERIAL_CATS } from '../lib/data.js';
 import { fmt, fmtMD, todayISO, addDays, validateGUI } from '../lib/format.js';
 
@@ -610,6 +610,18 @@ function MaterialModal({ onClose, onSubmit, materials, editing = null }) {
     return `${prefix}-${String(n).padStart(3, '0')}`;
   };
 
+  // 下拉建議：目前類別已建立的品項優先，其他類別排在後面；同名只列一次
+  const suggest = (key, hintKey) => {
+    const mk = (list) => {
+      const seen = new Set();
+      return list.filter(m => m[key] && !seen.has(m[key]) && seen.add(m[key])).map(m => ({ value: m[key], hint: m[hintKey] }));
+    };
+    return [
+      { label: `本類別 · ${form.cat}`, items: mk(materials.filter(m => m.cat === form.cat)) },
+      { label: '其他類別', items: mk(materials.filter(m => m.cat !== form.cat)) },
+    ];
+  };
+
   const submit = () => {
     const e = {};
     if (!form.name.trim()) e.name = '請輸入品名';
@@ -643,13 +655,13 @@ function MaterialModal({ onClose, onSubmit, materials, editing = null }) {
     >
       <div className="quote-meta-grid">
         <Field label="代碼 · CODE" error={err.code} helper={editing ? '代碼不可變更' : form.code.trim() ? '' : `留空自動編號：${autoCode()}`}>
-          <Input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="NFB-2P-20" className="input mono" disabled={!!editing} />
+          <ComboInput value={form.code} onChange={v => setForm({ ...form, code: v.toUpperCase() })} groups={suggest('code', 'name')} placeholder="NFB-2P-20" disabled={!!editing} />
         </Field>
         <Field label="類別 · CATEGORY">
           <Select value={form.cat} onChange={pickCat} options={['配電','電線','管材','工資','雜項'].map(c => ({ value: c, label: c }))} />
         </Field>
         <Field label="品名 · NAME" error={err.name}>
-          <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="無熔絲開關 NFB 2P 20A" autoFocus />
+          <ComboInput value={form.name} onChange={v => setForm({ ...form, name: v })} groups={suggest('name', 'code')} placeholder="無熔絲開關 NFB 2P 20A" autoFocus />
         </Field>
         <Field label="單位 · UNIT">
           <Input value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} placeholder={isLabor ? '工時' : '個'} />

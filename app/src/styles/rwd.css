@@ -365,3 +365,36 @@
   .cat-grid { grid-template-columns: repeat(2, 1fr); }
   .chart-bars { gap: 6px; }
 }
+
+/* ── 可挑選輸入欄（ComboInput）· 右側 ▼ 展開已建立的選項 ─── */
+.combo { position: relative; }
+.combo .combo-input { padding-right: 36px; }
+.combo-toggle {
+  position: absolute; top: 1px; right: 1px; bottom: 1px; width: 34px;
+  background: transparent; border: 0; border-left: 1px solid var(--line-faint);
+  cursor: pointer;
+}
+.combo-toggle::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 0; height: 0; margin: -2px 0 0 -5px;
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+  border-top: 6px solid var(--accent);
+  transition: transform 150ms ease;
+}
+.combo-toggle.is-open::after { transform: rotate(180deg); }
+.combo-toggle:hover { background: var(--accent-tint); }
+.combo-list {
+  position: fixed; z-index: 1000; overflow-y: auto;
+  background: var(--bg-panel); border: 1px solid var(--line-strong);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.combo-group { padding: 8px 12px 4px; color: var(--accent); }
+.combo-item {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  width: 100%; padding: 8px 12px; text-align: left;
+  background: transparent; border: 0; color: var(--fg-1);
+  font-family: var(--font-tc); font-size: 14px; cursor: pointer;
+}
+.combo-item:hover, .combo-item:focus { background: var(--accent-tint); color: var(--accent); outline: none; }
+.combo-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combo-hint { flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); }
