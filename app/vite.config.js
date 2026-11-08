@@ -5,7 +5,11 @@ import { readFileSync } from 'node:fs';
 
 // 版本與建置日期取自實際來源，狀態列不再顯示編造的版號
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
-const buildDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+// 建置時間（台灣時間 YYYYMMDD-HHMM）：狀態列顯示，方便確認瀏覽器拿到的是哪一版
+const tw = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+}).formatToParts(new Date()).map(x => [x.type, x.value]));
+const buildDate = `${tw.year}${tw.month}${tw.day}-${tw.hour}${tw.minute}`;
 
 // base is overridden by the GitHub Pages deploy script via --base
 export default defineConfig({

@@ -426,3 +426,8 @@
 .valid-day-btn:disabled { cursor: default; opacity: 0.6; }
 .valid-day-custom { display: inline-flex; align-items: center; gap: 4px; color: var(--fg-3); font-size: 12px; }
 .valid-day-custom .input-inline { width: 64px; text-align: center; }
+
+/* 報價流程 · 逾期未簽 */
+.steps .step-alert { color: var(--fg-1); }
+.steps .step-alert .step-mark { color: var(--alert); font-weight: 700; }
+.steps .step-alert .row-sub { color: var(--alert); }

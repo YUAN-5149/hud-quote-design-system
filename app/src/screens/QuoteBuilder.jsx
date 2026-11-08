@@ -155,6 +155,46 @@ function GuiSearchModal({ proxy, initial, onClose, onPick }) {
 // ─────────────────────────────────────────────────────────────
 // QUOTE BUILDER
 // ─────────────────────────────────────────────────────────────
+// 報價流程：依這張報價單的實際狀態顯示（草稿 → 送出業主 → 業主簽回 → 請款）
+function QuoteSteps({ quote }) {
+  const st = quote?.status;
+  const overdue = st === 'warn' && quote?.validAt && quote.validAt < todayISO();
+  const invoiced = (quote?.invoicedCount || 0) > 0;
+  const steps = [
+    {
+      label: '草稿建立',
+      state: quote ? 'done' : 'active',
+      sub: quote ? `${quote.version?.toUpperCase() || 'V1'} · 已儲存` : '尚未儲存 · 按「儲存草稿」',
+    },
+    {
+      label: '送出業主',
+      state: st === 'warn' || st === 'ok' ? 'done' : quote ? 'active' : 'todo',
+      sub: st === 'warn' || st === 'ok' ? `${fmtMD(quote.issuedAt)} 送出 · 有效至 ${fmtMD(quote.validAt)}` : '按「送出報價」',
+    },
+    {
+      label: '業主簽回',
+      state: st === 'ok' ? 'done' : overdue ? 'alert' : st === 'warn' ? 'active' : 'todo',
+      sub: st === 'ok' ? `${fmtMD(quote.signedAt)} 簽回` : overdue ? '已逾期 · 請聯絡業主或建立新版本' : st === 'warn' ? '等待業主簽回' : '—',
+    },
+    {
+      label: '請款',
+      state: invoiced ? 'done' : st === 'ok' ? 'active' : 'todo',
+      sub: invoiced ? `已開 ${quote.invoicedCount} 期 · ${fmt(quote.invoicedAmount)}` : st === 'ok' ? '可到報價單列表「轉請款」' : '—',
+    },
+  ];
+  const mark = { done: '✓', active: '●', alert: '!', todo: '○' };
+  return (
+    <ol className="steps">
+      {steps.map(s => (
+        <li key={s.label} className={s.state === 'todo' ? '' : `step-${s.state}`}>
+          <span className="step-mark">{mark[s.state]}</span>
+          <div><div>{s.label}</div><div className="row-sub mono">{s.sub}</div></div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export function QuoteBuilder({ caseData, quote, versions = [], materials, company = {}, newQuoteNo, onClose, onSave, onOpenVersion, onNewVersion }) {
   // 只有草稿可編輯；已送出／已簽回的版本唯讀，要修改請建立新版本
   const readOnly = !!quote && quote.status !== 'info';
@@ -391,13 +431,8 @@ export function QuoteBuilder({ caseData, quote, versions = [], materials, compan
               <div className="row-sub mono">送出後到期日：{fmtMD(addDays(todayISO(), validDaysOf(info)))}</div>
             </div>
           </Panel>
-          <Panel title="核准流程" meta="WORKFLOW">
-            <ol className="steps">
-              <li className="step-done"><span className="step-mark">✓</span><div><div>草稿建立</div><div className="row-sub mono">04/17 10:24 · 陳師傅</div></div></li>
-              <li className="step-done"><span className="step-mark">✓</span><div><div>工料複核</div><div className="row-sub mono">04/18 09:15 · 林工</div></div></li>
-              <li className="step-active"><span className="step-mark">●</span><div><div>送出業主</div><div className="row-sub mono">等待 · 03:42</div></div></li>
-              <li><span className="step-mark">○</span><div><div>業主簽回</div><div className="row-sub mono">—</div></div></li>
-            </ol>
+          <Panel title="報價流程" meta="WORKFLOW">
+            <QuoteSteps quote={quote} />
           </Panel>
         </aside>
       </div>
