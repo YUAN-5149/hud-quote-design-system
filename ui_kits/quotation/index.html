@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Quotation" name="UI Kit · Dashboard" subtitle="Full HUD dashboard with rail, topbar, panels" viewport="1440x900" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>水電報價 // 主控台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<script type="text/babel" src="Primitives.jsx"></script>
+<script type="text/babel" src="Chrome.jsx"></script>
+<script type="text/babel" src="Screens.jsx"></script>
+<script type="text/babel" src="Auth.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+function App() {
+  const [session, setSession] = useState(() => loadSession());
+  const [screen, setScreen] = useState(() => localStorage.getItem('scr') || 'dashboard');
+  const [selectedCase, setSelectedCase] = useState(null);
+  const [cases, setCases] = useState(CASES_SEED);
+  const [newCaseOpen, setNewCaseOpen] = useState(false);
+
+  useEffect(() => { localStorage.setItem('scr', screen); }, [screen]);
+  useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+
+  const handleAuth = (s) => { saveSession(s); setSession(s); setScreen('dashboard'); };
+  const logout = () => { saveSession(null); setSession(null); };
+
+  if (!session) return <LoginScreen onAuth={handleAuth} />;
+
+  const openCase = (c) => { setSelectedCase(c); setScreen('quote'); };
+  const openNewQuote = () => { setSelectedCase(null); setScreen('quote'); };
+  const createCase = (c) => setCases(prev => [c, ...prev]);
+
+  const labels = {
+    dashboard: 'COMMAND · 主控台',
+    cases: 'CASES · 案件',
+    quote: 'QUOTE · 報價編輯',
+    quotes: 'QUOTES · 報價單',
+    materials: 'MATERIALS · 材料',
+    billing: 'BILLING · 請款',
+    reports: 'REPORTS · 報表',
+    whitelist: 'WHITELIST · 白名單',
+  };
+
+  const content = () => {
+    switch(screen) {
+      case 'dashboard': return <Dashboard cases={cases} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} onBuildQuote={openNewQuote} />;
+      case 'cases': return <CaseList cases={cases} onOpenCase={openCase} onNewCase={() => setNewCaseOpen(true)} />;
+      case 'quote': return <QuoteBuilder caseData={selectedCase} onClose={() => setScreen('cases')} />;
+      case 'quotes': return <QuotesList onOpenQuote={openNewQuote} />;
+      case 'materials': return <MaterialsScreen />;
+      case 'billing': return <ComingSoon label="請款 // BILLING" />;
+      case 'reports': return <ReportsScreen />;
+      case 'whitelist': return <WhitelistScreen session={session} onLogout={logout} />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="app">
+      <Rail active={screen === 'quote' ? 'quotes' : screen} onNav={setScreen} session={session} onLogout={logout} />
+      <TopBar screenLabel={labels[screen]} session={session} onLogout={logout} />
+      <main className="main">{content()}</main>
+      <StatusBar session={session} />
+      <NewCaseModal open={newCaseOpen} onClose={() => setNewCaseOpen(false)} onCreate={createCase} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

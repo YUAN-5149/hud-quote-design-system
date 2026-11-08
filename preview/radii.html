@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Spacing" name="Radii & Corners" subtitle="Sparse radii plus signature corner notch" viewport="700x160" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Radii & Corners</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 20px; background: var(--bg-panel); display: flex; gap: 16px; align-items: flex-end; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .box { width: 90px; height: 70px; background: var(--bg-panel-2); border: 1px solid var(--line-active); }
+  .notch { clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+  .pill { border-radius: 999px; height: 32px; width: 110px; }
+  .label { font-family: var(--font-mono); font-size: 9px; color: var(--fg-3); letter-spacing: 0.15em; text-transform: uppercase; text-align: center; }
+  .sub { font-family: var(--font-mono); font-size: 10px; color: var(--accent); }
+</style>
+</head>
+<body>
+  <div class="item">
+    <div class="box" style="border-radius:0"></div>
+    <div class="label">R-0<br><span class="sub">0 PX</span></div>
+  </div>
+  <div class="item">
+    <div class="box" style="border-radius:2px"></div>
+    <div class="label">R-1<br><span class="sub">2 PX</span></div>
+  </div>
+  <div class="item">
+    <div class="box" style="border-radius:4px"></div>
+    <div class="label">R-2<br><span class="sub">4 PX · MAX</span></div>
+  </div>
+  <div class="item">
+    <div class="box notch"></div>
+    <div class="label">NOTCH<br><span class="sub">CLIP-PATH</span></div>
+  </div>
+  <div class="item">
+    <div class="box pill"></div>
+    <div class="label">PILL<br><span class="sub">STATUS ONLY</span></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Form Inputs" subtitle="Inputs, focus, error, toggles" viewport="700x260" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Form Inputs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 24px; background: var(--bg-panel); display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field-label { font-family: var(--font-mono); font-size: 10px; color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase; }
+  .input { background: #060C16; color: var(--fg-1); border: 1px solid var(--line-base); padding: 10px 12px; font-family: var(--font-tc); font-size: 14px; border-radius: 2px; outline: none; box-shadow: inset 0 1px 0 rgba(0,229,255,0.06); }
+  .input-focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 0 16px -4px var(--accent-glow), inset 0 1px 0 rgba(0,229,255,0.12); }
+  .input-err { border-color: var(--alert); box-shadow: 0 0 0 1px var(--alert); }
+  .helper { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); letter-spacing: 0.08em; }
+  .helper-err { color: var(--alert); }
+  .toggle { width: 40px; height: 20px; background: var(--bg-input); border: 1px solid var(--line-base); border-radius: 999px; position: relative; }
+  .toggle-on { background: var(--accent-tint); border-color: var(--accent); }
+  .toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: var(--fg-3); border-radius: 50%; transition: all 200ms; }
+  .toggle-on::after { left: 22px; background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+  .toggle-row { display: flex; align-items: center; gap: 10px; }
+  .toggle-lbl { font-family: var(--font-tc); font-size: 13px; color: var(--fg-1); }
+</style>
+</head>
+<body>
+  <div class="field">
+    <div class="field-label">案件名稱 · CASE</div>
+    <input class="input" value="大明商辦 3F 配電工程"/>
+    <div class="helper">CASE-ID AUTO-GENERATED</div>
+  </div>
+  <div class="field">
+    <div class="field-label">業主聯絡 · CLIENT</div>
+    <input class="input input-focus" value="王大明"/>
+    <div class="helper">FOCUSED</div>
+  </div>
+  <div class="field">
+    <div class="field-label">估價金額 · AMOUNT</div>
+    <input class="input input-err" value="-1200"/>
+    <div class="helper helper-err">金額不得為負值</div>
+  </div>
+  <div class="field">
+    <div class="field-label">開關項 · TOGGLES</div>
+    <div style="display:flex;gap:20px;padding-top:4px">
+      <div class="toggle-row"><div class="toggle toggle-on"></div><span class="toggle-lbl">含稅</span></div>
+      <div class="toggle-row"><div class="toggle"></div><span class="toggle-lbl">鎖定</span></div>
+    </div>
+  </div>
+</body>
+</html>

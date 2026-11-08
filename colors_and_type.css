@@ -1,0 +1,292 @@
+/* ============================================================
+   水電報價 HUD Design System — colors_and_type.css
+   Single source of truth for tokens.
+   ============================================================ */
+
+:root {
+  /* ─── COLOR · BASE FIELD ───────────────────────────────── */
+  --bg-void:        #020509;   /* outermost field, beyond panels */
+  --bg-base:        #040810;   /* default page background */
+  --bg-panel:       #0A111E;   /* card / panel surface */
+  --bg-panel-2:     #0F1828;   /* nested panel / hover */
+  --bg-input:       #060C16;   /* recessed input field */
+  --bg-overlay:     rgba(4, 8, 16, 0.72);
+
+  /* ─── COLOR · CHROME / LINES ───────────────────────────── */
+  --line-faint:     rgba(0, 229, 255, 0.10);
+  --line-base:      rgba(0, 229, 255, 0.18);
+  --line-strong:    rgba(0, 229, 255, 0.32);
+  --line-active:    rgba(0, 229, 255, 0.60);
+  --line-grid:      rgba(0, 229, 255, 0.04);
+
+  /* ─── COLOR · TEXT ─────────────────────────────────────── */
+  --fg-1:           #E6F1FF;   /* primary, headlines, key values */
+  --fg-2:           #A8B8D0;   /* body, labels */
+  --fg-3:           #7A8DA6;   /* secondary / metadata */
+  --fg-4:           #3D4B63;   /* tertiary / disabled */
+  --fg-on-accent:   #021018;   /* text on solid cyan */
+
+  /* ─── COLOR · ACCENTS ──────────────────────────────────── */
+  --accent:         #00E5FF;   /* phosphor cyan — primary */
+  --accent-hi:      #66F2FF;   /* hover / highlight */
+  --accent-lo:      #0099AA;   /* pressed / dim */
+  --accent-glow:    rgba(0, 229, 255, 0.50);
+  --accent-tint:    rgba(0, 229, 255, 0.08);
+
+  /* ─── COLOR · STATUS ───────────────────────────────────── */
+  --warn:           #FFB300;   /* pending, attention */
+  --warn-glow:      rgba(255, 179, 0, 0.45);
+  --warn-tint:      rgba(255, 179, 0, 0.10);
+
+  --alert:          #FF3B47;   /* error, destructive, overdue */
+  --alert-glow:     rgba(255, 59, 71, 0.45);
+  --alert-tint:     rgba(255, 59, 71, 0.10);
+
+  --ok:             #22E07A;   /* completed, paid */
+  --ok-glow:        rgba(34, 224, 122, 0.40);
+  --ok-tint:        rgba(34, 224, 122, 0.10);
+
+  --info:           #6E8EFF;   /* informational, neutral status */
+  --info-tint:      rgba(110, 142, 255, 0.10);
+
+  /* ─── TYPE · FAMILIES ──────────────────────────────────── */
+  --font-display:   'Orbitron', 'Noto Sans TC', sans-serif;
+  --font-body:      'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-tc:        'Noto Sans TC', 'Inter', sans-serif;
+  --font-mono:      'JetBrains Mono', 'SF Mono', Menlo, monospace;
+
+  /* ─── TYPE · SIZE SCALE (8pt-aligned) ─────────────────── */
+  --t-10:  10px;   /* micro chips, code lines */
+  --t-11:  11px;   /* status, captions */
+  --t-12:  12px;   /* metadata */
+  --t-13:  13px;   /* secondary body */
+  --t-14:  14px;   /* default body */
+  --t-16:  16px;   /* large body, button */
+  --t-18:  18px;   /* sub-heading */
+  --t-22:  22px;   /* h3 / panel title */
+  --t-28:  28px;   /* h2 */
+  --t-36:  36px;   /* h1 */
+  --t-48:  48px;   /* numeric display */
+  --t-64:  64px;   /* hero numeric / readout */
+
+  /* ─── TYPE · WEIGHTS ──────────────────────────────────── */
+  --w-regular:  400;
+  --w-medium:   500;
+  --w-semi:     600;
+  --w-bold:     700;
+
+  /* ─── TYPE · LINE HEIGHT ──────────────────────────────── */
+  --lh-tight:   1.1;
+  --lh-snug:    1.3;
+  --lh-base:    1.5;
+  --lh-loose:   1.7;
+
+  /* ─── TYPE · TRACKING ─────────────────────────────────── */
+  --tr-tight:    -0.01em;
+  --tr-base:     0;
+  --tr-wide:     0.06em;
+  --tr-wider:    0.12em;
+  --tr-widest:   0.20em;   /* used on UPPERCASE HUD labels */
+
+  /* ─── SPACING (8pt) ────────────────────────────────────── */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  24px;
+  --s-6:  32px;
+  --s-7:  40px;
+  --s-8:  48px;
+  --s-9:  56px;
+  --s-10: 64px;
+  --s-12: 96px;
+
+  /* ─── RADII (sparse) ───────────────────────────────────── */
+  --r-0:  0;
+  --r-1:  2px;     /* default for buttons / chips */
+  --r-2:  4px;     /* max — anything more breaks the look */
+  --r-pill: 999px; /* status pills only */
+
+  /* ─── ELEVATION (glow-based) ──────────────────────────── */
+  --glow-sm:   0 0 12px -2px var(--accent-glow);
+  --glow-md:   0 0 0 1px var(--line-active), 0 0 24px -4px var(--accent-glow);
+  --glow-lg:   0 0 0 1px var(--line-active), 0 0 48px -8px var(--accent-glow);
+  --glow-warn: 0 0 0 1px var(--warn), 0 0 24px -4px var(--warn-glow);
+  --glow-alert:0 0 0 1px var(--alert), 0 0 24px -4px var(--alert-glow);
+  --inset-recess: inset 0 1px 0 rgba(0, 229, 255, 0.06), inset 0 0 0 1px rgba(0, 229, 255, 0.10);
+
+  /* ─── MOTION ──────────────────────────────────────────── */
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:       cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out:   cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro:     120ms;
+  --dur-base:      200ms;
+  --dur-panel:     360ms;
+
+  /* ─── LAYOUT ──────────────────────────────────────────── */
+  --rail-collapsed: 64px;
+  --rail-expanded:  220px;
+  --topbar-h:       56px;
+  --statusbar-h:    32px;
+  --inspector-w:    320px;
+
+  /* ─── HUD CHROME ──────────────────────────────────────── */
+  --notch:        8px;       /* corner cut size */
+  --scanline-op:  0.015;     /* CRT overlay strength */
+  --grid-cell:    32px;      /* background grid */
+}
+
+/* ============================================================
+   GLOBAL RESET / BASE
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-base);
+  color: var(--fg-1);
+  font-family: var(--font-body);
+  font-size: var(--t-14);
+  line-height: var(--lh-base);
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-image:
+    linear-gradient(var(--line-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-grid) 1px, transparent 1px),
+    radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%);
+  background-size: var(--grid-cell) var(--grid-cell), var(--grid-cell) var(--grid-cell), 100% 100%;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   SEMANTIC TYPE CLASSES
+   ============================================================ */
+
+.h1, h1 {
+  font-family: var(--font-display);
+  font-size: var(--t-36);
+  font-weight: var(--w-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-wide);
+  color: var(--fg-1);
+  margin: 0;
+}
+
+.h2, h2 {
+  font-family: var(--font-display);
+  font-size: var(--t-28);
+  font-weight: var(--w-semi);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tr-wide);
+  color: var(--fg-1);
+  margin: 0;
+}
+
+.h3, h3 {
+  font-family: var(--font-tc);
+  font-size: var(--t-22);
+  font-weight: var(--w-bold);
+  line-height: var(--lh-snug);
+  color: var(--fg-1);
+  margin: 0;
+}
+
+.label, .panel-title {
+  font-family: var(--font-mono);
+  font-size: var(--t-11);
+  font-weight: var(--w-medium);
+  letter-spacing: var(--tr-widest);
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0;
+}
+
+.body, p {
+  font-family: var(--font-tc);
+  font-size: var(--t-14);
+  line-height: var(--lh-base);
+  color: var(--fg-2);
+  margin: 0 0 var(--s-3) 0;
+}
+
+.body-sm {
+  font-size: var(--t-13);
+  color: var(--fg-3);
+}
+
+.caption {
+  font-family: var(--font-mono);
+  font-size: var(--t-11);
+  letter-spacing: var(--tr-wide);
+  color: var(--fg-3);
+  text-transform: uppercase;
+}
+
+.mono, code, pre {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--w-medium);
+  letter-spacing: var(--tr-tight);
+}
+
+.numeric-display {
+  font-family: var(--font-display);
+  font-size: var(--t-48);
+  font-weight: var(--w-bold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tr-tight);
+  color: var(--fg-1);
+  line-height: 1;
+}
+
+/* ============================================================
+   HUD UTILITY: corner-notched panel
+   ============================================================ */
+
+.hud-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--line-base);
+  position: relative;
+  clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch)
+  );
+}
+
+.hud-bracket::before,
+.hud-bracket::after {
+  content: '';
+  position: absolute;
+  width: 12px; height: 12px;
+  border: 1px solid var(--accent);
+  pointer-events: none;
+}
+.hud-bracket::before {
+  top: -1px; left: -1px;
+  border-right: none; border-bottom: none;
+}
+.hud-bracket::after {
+  bottom: -1px; right: -1px;
+  border-left: none; border-top: none;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--fg-on-accent);
+}

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" fill="none">
+  
+  <g stroke="#00E5FF" fill="none" stroke-width="1.5">
+    <path d="M32 3 L57 17 L57 47 L32 61 L7 47 L7 17 Z"></path>
+    <path d="M32 12 L49 22 L49 42 L32 52 L15 42 L15 22 Z" stroke-width="1" opacity="0.4"></path>
+    <path d="M15 32 L22 32 L24 30 L28 30" stroke-width="1.5"></path>
+    <path d="M36 30 L40 30 L42 32 L49 32" stroke-width="1.5"></path>
+    <path d="M32 20 C32 20, 26 28, 26 34 C26 38.5 28.7 41 32 41 C35.3 41 38 38.5 38 34 C38 28 32 20 32 20 Z"></path>
+    <path d="M32 28 L30 33 L33 33 L31 38" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path>
+  </g>
+  
+  <line x1="74" y1="14" x2="74" y2="50" stroke="#00E5FF" stroke-width="1" opacity="0.4"></line>
+  
+  <text x="84" y="30" font-family="&#39;Noto Sans TC&#39;, sans-serif" font-size="18" font-weight="700" fill="#E6F1FF" letter-spacing="2">水電報價</text>
+  
+  <text x="84" y="48" font-family="&#39;JetBrains Mono&#39;, monospace" font-size="9" font-weight="500" fill="#00E5FF" letter-spacing="4">QUOTATION · HUD SYSTEM</text>
+</svg>

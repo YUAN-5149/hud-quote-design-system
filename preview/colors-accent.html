@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Accent Colors" subtitle="Phosphor cyan primary + status accents" viewport="700x230" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Accent Colors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { padding: 20px; background: var(--bg-base); }
+  .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .group { }
+  .group-label { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px; }
+  .ramp { display: flex; gap: 4px; }
+  .sw { flex: 1; height: 68px; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--line-base); }
+  .sw .nm { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .sw .hx { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="group">
+      <div class="group-label">PRIMARY · PHOSPHOR CYAN</div>
+      <div class="ramp">
+        <div class="sw" style="background:#66F2FF;color:#021018"><span class="nm">HI</span><span class="hx">#66F2FF</span></div>
+        <div class="sw" style="background:#00E5FF;color:#021018"><span class="nm">BASE</span><span class="hx">#00E5FF</span></div>
+        <div class="sw" style="background:#0099AA;color:#E6F1FF"><span class="nm">LO</span><span class="hx">#0099AA</span></div>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group-label">WARN · AMBER</div>
+      <div class="ramp">
+        <div class="sw" style="background:#FFB300;color:#1A0F00"><span class="nm">WARN</span><span class="hx">#FFB300</span></div>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group-label">ALERT · RED</div>
+      <div class="ramp">
+        <div class="sw" style="background:#FF3B47;color:#220509"><span class="nm">ALERT</span><span class="hx">#FF3B47</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="row" style="margin-top:12px">
+    <div class="group">
+      <div class="group-label">OK · GREEN</div>
+      <div class="ramp">
+        <div class="sw" style="background:#22E07A;color:#021A0A"><span class="nm">OK</span><span class="hx">#22E07A</span></div>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group-label">INFO · VIOLET BLUE</div>
+      <div class="ramp">
+        <div class="sw" style="background:#6E8EFF;color:#050A1A"><span class="nm">INFO</span><span class="hx">#6E8EFF</span></div>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group-label">ACCENT TINT (8%)</div>
+      <div class="ramp">
+        <div class="sw" style="background:rgba(0,229,255,0.08);color:#00E5FF"><span class="nm">TINT</span><span class="hx">0,229,255 / .08</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

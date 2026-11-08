@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Iconography" subtitle="Lucide + custom HUD ornament set" viewport="700x120" -->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Iconography</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  body { padding: 20px; background: var(--bg-panel); display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+  .icon-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--accent); }
+  .icon-cell .lbl { font-family: var(--font-mono); font-size: 9px; color: var(--fg-3); letter-spacing: 0.1em; text-transform: uppercase; }
+  .sep { width: 1px; height: 50px; background: var(--line-base); }
+  .group-label { font-family: var(--font-mono); font-size: 9px; color: var(--fg-3); letter-spacing: 0.2em; text-transform: uppercase; margin-right: 4px; writing-mode: vertical-rl; }
+  svg { stroke-width: 1.5; }
+</style>
+</head>
+<body>
+  <span class="group-label">LUCIDE</span>
+  <div class="icon-cell"><i data-lucide="zap" width="24" height="24"></i><span class="lbl">zap</span></div>
+  <div class="icon-cell"><i data-lucide="droplet" width="24" height="24"></i><span class="lbl">droplet</span></div>
+  <div class="icon-cell"><i data-lucide="file-text" width="24" height="24"></i><span class="lbl">quote</span></div>
+  <div class="icon-cell"><i data-lucide="wrench" width="24" height="24"></i><span class="lbl">tool</span></div>
+  <div class="icon-cell"><i data-lucide="activity" width="24" height="24"></i><span class="lbl">activity</span></div>
+  <div class="icon-cell"><i data-lucide="radar" width="24" height="24"></i><span class="lbl">radar</span></div>
+  <div class="icon-cell"><i data-lucide="layers" width="24" height="24"></i><span class="lbl">layers</span></div>
+  <div class="sep"></div>
+  <span class="group-label">HUD</span>
+  <div class="icon-cell" style="color:var(--accent)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8 L2 2 L8 2"/><path d="M22 8 L22 2 L16 2"/><path d="M2 16 L2 22 L8 22"/><path d="M22 16 L22 22 L16 22"/></svg><span class="lbl">bracket</span></div>
+  <div class="icon-cell"><svg width="24" height="24" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="24" cy="24" r="18" opacity="0.3"/><circle cx="24" cy="24" r="10" opacity="0.6"/><circle cx="24" cy="24" r="2" fill="currentColor" stroke="none"/><line x1="24" y1="2" x2="24" y2="8"/><line x1="24" y1="40" x2="24" y2="46"/><line x1="2" y1="24" x2="8" y2="24"/><line x1="40" y1="24" x2="46" y2="24"/></svg><span class="lbl">crosshair</span></div>
+<script>lucide.createIcons();</script>
+</body>
+</html>
